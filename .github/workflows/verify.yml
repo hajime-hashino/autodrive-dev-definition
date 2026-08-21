@@ -1,0 +1,35 @@
+name: verify
+
+# このリポジトリの範囲の判定のみを行う（案A）。リポジトリをまたいで初めて成立する
+# 不変条件は、kit 側の定期実行が見る。詳細は autodrive-dev-kit の
+# docs/verify-criteria.md「実行範囲」を参照。
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  self:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          path: repo
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "22.18"
+
+      - name: 判定器を取得する
+        env:
+          GH_TOKEN: ${{ secrets.AUTODRIVE_CI_TOKEN }}
+        run: |
+          git clone --quiet --depth 1 \
+            "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository_owner }}/autodrive-dev-kit.git" \
+            kit
+
+      - name: 発効を判定する
+        # self では不変条件1と4が判定対象外になるため、Repo API のトークンは
+        # 判定に要らない。判定ステップには資格情報を渡さない。
+        run: kit/verify --root repo --scope self
