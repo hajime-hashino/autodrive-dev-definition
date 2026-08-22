@@ -1,0 +1,1 @@
+{"ts":"2026-08-22T00:59:27.640Z","work_item_id":"AUT-19","model":"claude-opus-5","kit_version":"bootstrap","emitter":"adapter","type":"rework","target":"telemetry/*.jsonl の直書き記録の時刻","detail":"9件の ts を、その記録を含む最初のコミットの時刻へ補正した。元の値は ts_corrected_from に残している。理由は work の AUT-18 と同じ。","cause":"実装バグ"}
