@@ -1,0 +1,2 @@
+{"ts":"2026-08-28T06:51:07.533Z","work_item_id":"AUT-84","model":"claude-opus-5","kit_version":"0.1.0","emitter":"adapter","type":"stop","stop_kind":"definition_vocabulary","stop_type":"入力","detail":"「発効」の言い換えと、4つの状態の名前を人が決めた。有効／代替／要対応／対象外","resolved":true}
+{"ts":"2026-08-28T06:51:07.621Z","work_item_id":"AUT-84","model":"claude-opus-5","kit_version":"0.1.0","emitter":"adapter","type":"miss","target":"定義§9","detail":"状態が実際には4つあるのに、定義には発効／未発効の2つしか書かれていなかった。参照実装は4つを持っており、定義が実装より粗かった","cause":"要件のズレ","found_in":"語彙を見直す作業"}
