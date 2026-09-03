@@ -1,0 +1,1 @@
+{"ts":"2026-09-03T16:07:00.204Z","work_item_id":"AUT-127","model":"claude-opus-5","kit_version":"0.1.0","emitter":"adapter","type":"stop","stop_kind":"意思決定","stop_type":"入力","detail":"定義への変更は人の承認を要するため、提出までを用意して止まる。目的を§1の下に置き、測れないことを明記した。前提知識を要求する停止を§6で手戻りに分類する案は、記録の時点で区別できるかが未検証のため§17へ回した。","resolved":false}
