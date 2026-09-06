@@ -2,7 +2,7 @@ name: verify
 
 # このリポジトリの範囲の判定のみを行う（案A）。リポジトリをまたいで初めて成立する
 # 不変条件は、kit 側の定期実行が見る。詳細は autodrive-dev-kit の
-# docs/verify-criteria.md「実行範囲」を参照。
+# docs/invariants.md「実行範囲」を参照。
 on:
   pull_request:
   push:
@@ -22,11 +22,15 @@ jobs:
           node-version: "22.18"
 
       - name: 判定器を取得する
+        # **名前を実態に合わせる。** ここに要るのは読取だけであり、渡しているのは
+        # 読取専用の AUTODRIVE_CI_TOKEN である。以前はこれを GH_TOKEN という名前で
+        # 受けていたため、**読んだ人は「CI に書き込み用の鍵がある」と受け取った。**
+        # 実際に、それを前提にした誤った案内が出ている（AUT-139）。
         env:
-          GH_TOKEN: ${{ secrets.AUTODRIVE_CI_TOKEN }}
+          CLONE_TOKEN: ${{ secrets.AUTODRIVE_CI_TOKEN }}
         run: |
           git clone --quiet --depth 1 \
-            "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository_owner }}/autodrive-dev-kit.git" \
+            "https://x-access-token:${CLONE_TOKEN}@github.com/${{ github.repository_owner }}/autodrive-dev-kit.git" \
             kit
 
       - name: 発効を判定する
