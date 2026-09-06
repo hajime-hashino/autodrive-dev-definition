@@ -1,0 +1,1 @@
+{"ts":"2026-09-06T01:32:09.752Z","work_item_id":"AUT-136","model":"claude-opus-5","kit_version":"0.1.0","emitter":"adapter","type":"stop","stop_kind":"意思決定","stop_type":"入力","detail":"定義への変更は人の承認を要するため、提出までを用意して止まる。人の当初案（エンタープライズSDD→SDD）は、いま SDD が仕様駆動開発を指すため採らず、調べた事実を出して比較対象そのものを変える案に至った。人が実際に比べたい相手（Spec Kit）を人から聞き出せたことが決め手。","resolved":false}
