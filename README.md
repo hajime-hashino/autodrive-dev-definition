@@ -559,3 +559,27 @@ Repoに置く記録は、索引ファイルからの逆引きを用意し、計�
 - 前提知識を要求して止まった停止を、どう扱うか（§1「何のために置いているか」）。§6は「同じことを繰り返し聞くのは手戻り」という歯止めを持つが、これと同型の扱いを置くかは決めていない。**入力の停止に見えるが、目的からは失敗である。** 進める人の熟練を前提にしているため。ただし「前提知識を要求したか」を記録の時点で区別できるかが未検証であり、区別できないまま種別を増やすと分類の解釈が入る
 
 いずれも実データがないと決め打ちできないため、テレメトリが稼働してからの調整項目とする。
+
+## ライセンス
+
+この定義は [Creative Commons 表示 4.0 国際（CC BY 4.0）](LICENSE)で提供する。
+
+Copyright 2026 Hajime Hashino
+
+**出所を示せば、引用・翻訳・改変・商用利用のいずれも自由である。** この手法は読まれて使われることを目的にしているため、許諾を狭めない。
+
+出所の示し方の例:
+
+```
+「AIオートドライビング開発 定義」 Hajime Hashino 著
+https://github.com/hajimegane/autodrive-dev-definition
+CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/)
+```
+
+改変した場合は、改変した旨も併せて示すこと。
+
+### なぜコードのライセンスではないか
+
+このリポジトリは散文だけを持ち、コードを持たない。ソフトウェアのライセンスが使う語（Source / Object / Derivative Works）は、散文に当てはめると解釈が要る。CC BY 4.0 は文書と仕様のために作られており、そこが要らない。
+
+参照実装の [autodrive-dev-kit](https://github.com/hajimegane/autodrive-dev-kit) は、コードであるため [Apache-2.0](https://github.com/hajimegane/autodrive-dev-kit/blob/main/LICENSE) を用いる。**引用の向きは定義から参照実装であり、出所を示せば両立する。**
