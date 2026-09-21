@@ -1,4 +1,4 @@
-name: verify
+name: invariants
 
 # このリポジトリの範囲の判定のみを行う（案A）。リポジトリをまたいで初めて成立する
 # 不変条件は、kit 側の定期実行が見る。詳細は autodrive-dev-kit の
@@ -36,4 +36,4 @@ jobs:
       - name: 発効を判定する
         # self では不変条件1と4が判定対象外になるため、Repo API のトークンは
         # 判定に要らない。判定ステップには資格情報を渡さない。
-        run: kit/verify --root repo --scope self
+        run: kit/src/vendored/invariants --root repo --scope self
