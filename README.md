@@ -633,7 +633,7 @@ Copyright 2026 Hajime Hashino
 
 ```
 「AIオートドライビング開発 定義」 Hajime Hashino 著
-https://github.com/hajimegane/autodrive-dev-definition
+https://github.com/hajime-hashino/autodrive-dev-definition
 CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/)
 ```
 
@@ -643,4 +643,4 @@ CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/)
 
 このリポジトリは散文だけを持ち、コードを持たない。ソフトウェアのライセンスが使う語（Source / Object / Derivative Works）は、散文に当てはめると解釈が要る。CC BY 4.0 は文書と仕様のために作られており、そこが要らない。
 
-参照実装の [autodrive-dev-kit](https://github.com/hajimegane/autodrive-dev-kit) は、コードであるため [Apache-2.0](https://github.com/hajimegane/autodrive-dev-kit/blob/main/LICENSE) を用いる。**引用の向きは定義から参照実装であり、出所を示せば両立する。**
+参照実装の [autodrive-dev-kit](https://github.com/hajime-hashino/autodrive-dev-kit) は、コードであるため [Apache-2.0](https://github.com/hajime-hashino/autodrive-dev-kit/blob/main/LICENSE) を用いる。**引用の向きは定義から参照実装であり、出所を示せば両立する。**
