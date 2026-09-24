@@ -1,0 +1,1 @@
+{"ts":"2026-09-24T02:26:23.834Z","work_item_id":"AUT-241","model":"claude-opus-5","kit_version":"0.12.12","emitter":"adapter","type":"stop","stop_kind":"定義変更の承認","stop_type":"入力","detail":"ポート語彙に「作業単位の本文を直す」を足す。AUT-209 で人が「着手前だけ直せる」を選んだことを受けたもの。着手後を塞ぐ理由（何を頼まれたかの記録が書き換わると、頼まれたとおり作ったかを確かめられなくなる）も併せて定義に書いた","resolved":true}
