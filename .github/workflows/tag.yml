@@ -1,0 +1,72 @@
+name: tag
+
+# 版に名前を付ける。
+#
+# **統合されたあとに打つ。** 提出の途中で打つと、統合されなかった版にタグが残る。
+#
+# **手で打つ形をやめる。** v0.12 までは手で打たれていて、v0.13 から v0.18 までの
+# 6版が抜けた（AUT-229）。**打ち忘れに気づく機会が無い。** README は「過去の版は
+# git のタグを参照」と案内しており、直近6版について指す先が存在しなかった。
+#
+# 参照実装の `tag.yml` と同じ形だが、**版の在り処が違う。** あちらは `VERSION`
+# ファイルを読む。こちらは README の見出しにある。
+on:
+  push:
+    branches: [main]
+
+# **この実行にだけ、書き込みを許す。** 別に資格情報を置かない。
+permissions:
+  contents: write
+
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # **既にあるタグが要る。** 無いと、毎回「無い」と判断して打ちに行く。
+          fetch-depth: 0
+
+      - name: 版にタグを打つ
+        run: |
+          set -eu
+
+          # **README の見出しから読む。** 版の在り処はここだけである。
+          version="$(grep -m1 '\*\*バージョン\*\*' README.md | grep -oE 'v[0-9]+\.[0-9]+')"
+
+          # **読めなければ落とす。** 空のまま進むと `definition-` という名前の
+          # タグが打たれ、**打てたことが成功に見える。**
+          if [ -z "${version}" ]; then
+            echo "README.md から版を読めない。見出しの形が変わった可能性がある。" >&2
+            exit 1
+          fi
+
+          # **CHANGELOG の先頭と揃っていることを確かめる。** 片方だけ上げた状態で
+          # タグを打つと、**タグの指す全文と、その版の差分が食い違う。**
+          changelog="$(grep -m1 -oE '^## v[0-9]+\.[0-9]+' CHANGELOG.md | sed 's/^## //')"
+          if [ "${version}" != "${changelog}" ]; then
+            echo "本文は ${version} だが CHANGELOG の先頭は ${changelog} である。揃えること。" >&2
+            exit 1
+          fi
+
+          tag="definition-${version}"
+
+          # **同じ名前があれば何もしない。** 定義を変えない提出では版が動かないため、
+          # これは異常ではなく普通に起きる。
+          if git rev-parse -q --verify "refs/tags/${tag}" >/dev/null; then
+            echo "${tag} は既にある。何もしない。"
+            exit 0
+          fi
+
+          # **注釈付きタグには tagger の身元が要る。** `actions/checkout` は git の
+          # 身元を設定しないため、無いまま `git tag -a` を打つと落ちる。
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # **注釈付きで打つ。** 軽量タグは、指す先のコミットの身元がそのまま
+          # 押し出される。**作者のメールアドレスを公開しない設定のもとでは、
+          # 古いコミットを指す軽量タグが拒否される**（AUT-229 で実際に5件が
+          # GH007 で落ちた）。注釈付きなら、押し出されるのはタグ自身の身元である。
+          git tag -a "${tag}" -m "定義 ${version}"
+          git push origin "${tag}"
+          echo "打った: ${tag}"
