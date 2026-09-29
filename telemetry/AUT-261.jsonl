@@ -1,0 +1,1 @@
+{"ts":"2026-09-29T11:56:04.836Z","work_item_id":"AUT-261","model":"claude-opus-5-5","kit_version":"0.12.22","emitter":"adapter","type":"stop","stop_kind":"定義変更の承認","stop_type":"入力","detail":"AUT-261 定義の英語化（PR #24）の統合を人に求めた。検証はブラウザの翻訳で行えると人が事前に確認している","resolved":false}

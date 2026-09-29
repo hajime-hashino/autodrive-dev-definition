@@ -1,8 +1,73 @@
-# 変更履歴
+# Changelog
 
-このファイルは定義の版ごとの差分を記録する。
+This file records the differences between versions of the definition.
 
-v0.7 以降の全文は git のタグ（`definition-v0.7` 等）から取得できる。**v0.7 より前の版の全文は残っていない。** このリポジトリを git 管理下に置いたのが v0.7 の時点であり、それ以前の版については、このファイルに記録された差分のみが手掛かりとなる。
+The full text from v0.7 onward can be obtained from the git tags (`definition-v0.7` and so on). **The full text of versions before v0.7 does not remain.** This repository was put under git at v0.7, and for earlier versions the only clue is the differences recorded in this file.
+
+**Entries up to v0.18 are in Japanese.** They are records of what was decided at the time and are not translated. The mapping from the Japanese terms they use to the current English ones is in the v0.19 entry.
+
+---
+
+## v0.19 — 2026-09-29
+
+**The definition is now written in English.** The meaning has not changed.
+
+### Why
+
+The reference implementation's README is in English, and what it distributes is being moved to English too. With the definition alone left in Japanese, every time the reference implementation cited a term from the definition, the translation could drift, and the two could no longer be checked against each other. **Rather than maintaining a glossary indefinitely, the definition itself was translated so that the source of drift disappears** (human judgment, 2026-09-29).
+
+### What did not change
+
+- **Section numbers.** The reference implementation, ADRs, and records cite the definition by number (§1 to §18). Only the contents were translated
+- **The meaning.** Translation was not mixed with changes to content. Emphasis (bold) was kept where it was, since in this document it marks the core of each claim
+- **Entries up to v0.18 in this file.** They are records
+- **No Japanese edition is kept alongside.** Two editions would drift apart. Readers who want Japanese can ask the AI
+
+### Term mapping
+
+For reading the Japanese records (this file up to v0.18, ADRs, work items, telemetry). Terms follow those already used in the reference implementation's English README and messages.
+
+| Japanese | English |
+|---|---|
+| AIオートドライビング開発 | AI Autodriving Development |
+| 作業単位 | work item |
+| 停止 / 停止イベント / 停止点 | stop / stop event / stopping point |
+| 入力を得る停止 / 手戻りによる停止 | stop to obtain input (input stop) / stop due to rework |
+| 手戻り | rework |
+| 要件のズレ / 設計のズレ / 実装バグ | requirements drift / design drift / implementation bug |
+| 検出漏れ | missed detection |
+| 抜き取り確認 | spot check |
+| 委譲範囲 / 委譲範囲の表 / 委譲範囲の変更 | scope of delegation / delegation table / delegation change |
+| 保留 / 観察中 / 委譲済み | on hold / under observation / delegated |
+| 緩和 / 締め直し | loosening / tightening back |
+| 気づける / 戻せる / 記録される | detectable / reversible / recorded |
+| 固定条件 / 自動ゲート＋人が発火 / 完全委譲 | fixed condition / automated gate + human trigger / full delegation |
+| 不変条件 | invariant |
+| 有効 / 代替 / 要対応 / 対象外 | active / substituted / unresolved / out of scope |
+| 立ち上げ期 | bootstrap phase |
+| 内側ループ / 外側ループ | inner loop / outer loop |
+| ハーネス | harness |
+| 人の関与あたりの成果 | output per unit of human involvement |
+| 参照実装 | reference implementation |
+| 提出 / 統合 | submission / integration |
+| 意思決定ログ / 作業ログ | decision log / work log |
+| 必須属性 | required attribute |
+| 検証環境 / 本番 | verification environment / production |
+| 読取 / 記録 / 不可逆 | Read / Record / Irreversible |
+
+The operation names in the §16 port vocabulary were translated as well.
+
+| Japanese | English |
+|---|---|
+| 作業単位を取得する / 作業単位を起票する / ステータスを進める / 作業ログを追記する / 作業単位の本文を直す | Get work item / File work item / Advance status / Append to work log / Edit work item body |
+| 作業空間を用意する / 変更を提出する / 提出の中身と指摘を取得する / 変更を統合する | Prepare workspace / Submit change / Get submission contents and comments / Integrate change |
+| 検証を実行する / 検証結果を取得する / 配布を実行する / 配布を戻す | Run verification / Get verification results / Run deployment / Roll back deployment |
+| サンドボックスを用意する / コマンドを実行する / サンドボックスを破棄する | Prepare sandbox / Run command / Discard sandbox |
+| 変更をプレビューに出す / プレビュー先を取得する / プレビューを破棄する | Put change on preview / Get preview location / Discard preview |
+| 停止を記録する / 手戻りを記録する / 抜き取り確認を記録する / 委譲範囲の変更を記録する | Record stop / Record rework / Record spot check / Record delegation change |
+| 見せる範囲のフラグを定義する / 見せる範囲を広げる / 見せる範囲を戻す / 露出を変更する | Define exposure flag / Widen exposure / Revert exposure / Change exposure |
+
+**The reference implementation's commands still use the Japanese operation names** (such as `telemetry 停止を記録する`). Until they follow, the Japanese column above is what connects the two.
 
 ---
 

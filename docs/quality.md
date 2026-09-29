@@ -1,82 +1,81 @@
-# 品質管理
+# Quality management
 
-**この定義が、何を、どの手法で、どこまで確認するかを決めた記録である。**
+**This is the record of what this definition decided to check, by which method, and how far.**
 
-観点と箇所の一覧、ベースライン、決め方は参照実装が配る `docs/autodrive.md`「品質管理」
-にある。**ここは決めた結果を置く場所。**
+The list of aspects and stages, the baseline, and how to decide are in `docs/autodrive.md`
+"Quality management," distributed by the reference implementation. **This is where the decided results go.**
 
-## ここが他と違う
+## How this differs from others
 
-**文書だけで、コードが無い。**
+**It is documents only, with no code.**
 
-したがって**製品品質の格子が、そのままは当てはまらない。** 単体・結合・システム・
-受入・本番監視という段が、どれも存在しない。
+Therefore **the product quality grid does not apply as it is.** The stages of unit, integration, system,
+acceptance, and production monitoring — none of them exist.
 
-**「当てはまらない」と書くこと自体が記録である。** 空欄にすると、決めていないのか
-要らないのかが後から区別できない。
+**Writing "does not apply" is itself a record.** Leave it blank, and later one cannot tell whether it was
+undecided or unnecessary.
 
-**利用者は、この定義に従って開発する人と、参照実装である。** 定義が矛盾していれば、
-従う側は矛盾したまま動く。**気づくのは、矛盾が実装に現れたときになる。**
+**The users are people who develop following this definition, and the reference implementation.** If the definition
+contradicts itself, those following it act on the contradiction. **It is noticed when the contradiction shows up in an implementation.**
 
 ---
 
-## 確認していること
+## What is checked
 
-| 観点 | 箇所 | 手法 | どこまで見ているか |
+| Aspect | Stage | Method | How far it looks |
 |---|---|---|---|
-| 整合性 | 静的 | **人が読む** | 節どうしの矛盾。**機械的な検出は無い** |
-| 整合性 | 静的 | **無い** | **`§n` の参照先が実在するか。** いま全部実在するが、確かめているのは人である |
-| 整合性 | 静的 | **無い** | **本文の版と CHANGELOG の先頭が揃っているか。** いま両方 v0.17 |
-| 記録の構造 | 静的 | `invariants --scope self`（CI） | **記録の必須属性と構造だけ。** 定義の中身は見ていない |
-| 定義と実装のずれ | — | **無い** | 参照実装のテストが `定義§n` を23箇所で引くが、**引いた先が定義と合っているかは誰も見ていない** |
+| Consistency | Static | **A human reads it** | Contradictions between sections. **There is no mechanical detection** |
+| Consistency | Static | **None** | **Whether each `§n` reference points to a section that exists.** All currently exist, but it is a human who confirms this |
+| Consistency | Static | **None** | **Whether the version in the body matches the top of CHANGELOG.** Currently both v0.17 |
+| Structure of records | Static | `invariants --scope self` (CI) | **Only the required attributes and structure of records.** The content of the definition is not looked at |
+| Drift between definition and implementation | — | **None** | The reference implementation's tests cite `定義§n` in 23 places, but **nobody looks at whether what they cite matches the definition** |
 
-**「どこまで」を省略しないこと。** 手法の名前だけでは、全体を見ているのか1本だけなのかが
-分からない。**読む人は、書いていない範囲まで見ていると受け取る。**
+**Do not omit "how far."** The name of a method alone does not say whether it looks at everything or at a single file.
+**Readers take it that ranges not written are being looked at too.**
 
-## 当てはまらないと決めたもの
+## What was decided not to apply
 
-**格子の行を無理に埋めない。** 合わない軸を埋めると、埋まったことが品質の説明にされる
-（定義§10）。
+**Do not force the rows of the grid to be filled.** Filling an axis that does not fit gets the filling used as an explanation of quality
+(definition §10).
 
-| 何を | なぜ当てはまらないか |
+| What | Why it does not apply |
 |---|---|
-| 機能（単体・結合・システム） | **動くものが無い。** 実行できる対象が存在しない |
-| ビジネス目的の達成（受入・E2E） | 同上。**この定義の「目的が果たされたか」は、参照実装と題材アプリの側に現れる** |
-| 性能 | 同上 |
-| 信頼性（本番監視） | **本番が無い。** 配られるのは文書であり、動作しない |
-| セキュリティ（依存の脆弱性） | **依存が無い。** 文書だけである |
+| Functionality (unit, integration, system) | **There is nothing that runs.** No executable target exists |
+| Achieving the business purpose (acceptance, E2E) | Same as above. **Whether this definition's "purpose was served" shows up on the side of the reference implementation and the subject apps** |
+| Performance | Same as above |
+| Reliability (production monitoring) | **There is no production.** What is distributed is documents, and they do not run |
+| Security (dependency vulnerabilities) | **There are no dependencies.** It is documents only |
 
-## 確認しないと決めたこと
+## What was decided not to check
 
-| 何を | なぜ空けたか | 見直す条件 |
+| What | Why it was left open | Condition for revisiting |
 |---|---|---|
-| 秘密の混入検査 | 参照実装の `invariants` が横断で見ており、**このリポジトリも対象に入っている。** 二重に持たない | 横断判定から外れるとき |
-| `§n` の参照先が実在するかの自動検出 | **いま全部実在する。** 節が増減したときに壊れるが、頻度が低い。**壊れても、読んだ人がすぐ気づく**（開けない番号は目立つ） | 節の増減が続くようになったとき |
+| Scanning for leaked secrets | The reference implementation's `invariants` looks across repositories, and **this repository is included in its targets.** Not held twice | When it is removed from the cross-repository check |
+| Automatic detection of whether each `§n` reference points to a section that exists | **All currently exist.** It breaks when sections are added or removed, but that is infrequent. **Even if it breaks, a reader notices immediately** (a number that cannot be opened stands out) | When additions and removals of sections become frequent |
 
-## 戻せないもの
+## What cannot be undone
 
-| 何が起きうるか | 検出しているもの | 誰が発火するか |
+| What could happen | What detects it | Who triggers |
 |---|---|---|
-| 矛盾した定義が配られ、従う側が矛盾したまま動く | **無い。** 人が読むだけである | 人（統合が引き金） |
-| 統合した内容が、そのまま公開される（2026-09-26 に人の判断で公開した。LICENSE は CC BY 4.0） | 秘密は2か所で見ている。追跡してはいけないファイルと参照実装が使う鍵の形は、提出ごとに `invariants` が見る。GitHub が検出できる形の鍵は、Push protection が push の時点で止め、Secret Protection が履歴も含めて知らせる（2026-09-26 に人が有効にした）。**どちらも見ないのは、検出できない形の秘密と、公開してよい内容かの判断である** | 人（統合が引き金） |
+| A contradictory definition is distributed, and those following it act on the contradiction | **None.** A human only reads it | Human (integration is the trigger) |
+| What is integrated is published as it is (published on 2026-09-26 by human judgment. LICENSE is CC BY 4.0) | Secrets are looked at in two places. Files that must not be tracked and key shapes the reference implementation uses are checked by `invariants` on every submission. Keys in shapes GitHub can detect are stopped by Push protection at push time, and Secret Protection reports them including history (enabled by a human on 2026-09-26). **What neither looks at is secrets in undetectable shapes, and the judgment of whether the content is fine to publish** | Human (integration is the trigger) |
 
-**無いなら「無い」と書くこと。** 空欄は「問題なし」と読まれる。
+**If there is none, write "none."** A blank is read as "no problem."
 
-## 決めた水準
+## Levels decided
 
-**案を出したのはAI、選んだのは人。** どちらが決めたかが読めること。
+**It was the AI that proposed and the human that chose.** It must be readable who decided.
 
-| 項目 | 決めた水準 | いつ決めたか |
+| Item | Level decided | When decided |
 |---|---|---|
-| 格子の大半 | **当てはまらない。** 無理に埋めない | 2026-09-23 |
-| 整合性 | **人が読む。** 機械的な検出は置かない | 2026-09-23 |
+| Most of the grid | **Does not apply.** Not forced to be filled | 2026-09-23 |
+| Consistency | **A human reads it.** No mechanical detection is placed | 2026-09-23 |
 
-## 気づいたこと（この記録を書いていて）
+## Things noticed (while writing this record)
 
-**タグが `definition-v0.9` で止まっている。** 本文は v0.16 である。
+**The tags stop at `definition-v0.9`.** The body is at v0.16.
 
-README は「過去の版は git のタグ（`definition-v0.4` 等）を参照」と書いているが、
-**v0.10 以降のタグが無い。** 案内が指す先が存在しない。
+README says "For earlier versions, see the git tags (`definition-v0.4` and so on)," but
+**there are no tags from v0.10 onward.** What the guidance points to does not exist.
 
-**この記録では直さない。** AUT-229 で扱う。書いておかないと、次に読んだ人が同じことを
-調べ直す。
+**Not fixed in this record.** Handled in AUT-229. If not written down, the next reader will look into the same thing again.

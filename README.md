@@ -1,648 +1,648 @@
-# AIオートドライビング開発 定義
+# AI Autodriving Development — Definition
 
-> **バージョン**: v0.18
-> **最終更新**: 2026-09-24
-> 過去の版は git のタグ（`definition-v0.4` 等）を参照。版ごとの差分は [CHANGELOG.md](./CHANGELOG.md) にある。
+> **Version**: v0.19
+> **Last updated**: 2026-09-29
+> For earlier versions, see the git tags (`definition-v0.4` and so on). The differences between versions are in [CHANGELOG.md](./CHANGELOG.md).
 
-## 1. 一文定義
+## 1. One-sentence definition
 
-誤りの検出を、人によるレビューから実行結果と自動検証に置き換えることで人のレビューゲートを撤去し、**プロダクトの構築と、それを構築する仕組みの改善の両方** を AI が主導して回す開発手法。人の役割は、What/Whyの提示と、AIが停止した地点での意思決定に限定される。
+A development method that removes the human review gate by replacing error detection by human review with execution results and automated verification, and in which the AI leads **both the building of the product and the improvement of the machinery that builds it**. The human role is limited to presenting the What/Why and making decisions at the points where the AI stops.
 
-### 何のために置いているか
+### What it is for
 
-**成果物の品質が、進める人の熟練に依存しない状態を作ること。**
+**To reach a state in which the quality of what is produced does not depend on the skill of the person driving the work.**
 
-人がレビューゲートを担っている限り、品質は見る人の熟練に比例する。**熟練が無い人にとって、速く作れることはそのまま危うさになる。** 作ったものが正しいかを確かめる手段を持たないまま、量だけが増えるためである。
+As long as a human holds the review gate, quality is proportional to the skill of whoever looks. **For someone without that skill, being able to build fast is simply a hazard.** Volume grows while there is no means of confirming that what was built is correct.
 
-検出を実行結果と自動検証に置き換えるのは、**確かめる役目を人から外すためである。** §1が撤去すると言っているのはゲートであって、確認ではない。
+Detection is replaced with execution results and automated verification **in order to take the job of confirming off the human.** What §1 says it removes is the gate, not the confirmation.
 
-**「誰でも同じものが作れる」という意味ではない。** 到達できるプロダクトの難易度と品質の上限は、進める人によって変わる（§12）。目的は上限を揃えることではない。**その人が到達できる範囲の中で、品質が熟練に左右されないようにすることである。**
+**This does not mean "anyone can build the same thing."** The upper limit of the difficulty and quality of the product that can be reached varies with the person driving it (§12). The aim is not to equalize that limit. **It is that, within the range a given person can reach, quality is not swayed by skill.**
 
-#### §4との関係
+#### Relation to §4
 
-これは目的であって、最大化する変数ではない。**最大化する変数は§4の1つに保つ。**
+This is a purpose, not a variable to maximize. **The variable to maximize is kept to the single one in §4.**
 
-2つ置くと、どちらを取るかの判断が要る場面で基準が2つになる。§4が「人の関与あたりの成果」を選んでいるのは、この目的から出た帰結である。**熟練を前提にできないなら、人の関与は成果あたりで減らすしかない。**
+With two, there would be two criteria in situations that require choosing between them. §4 choosing "output per unit of human involvement" is a consequence of this purpose. **If skill cannot be assumed, the only option is to reduce human involvement per unit of output.**
 
-#### 測らない
+#### Not measured
 
-**この目的は指標として直接測定しない。** §4の変数と同じ理由に加えて、「一定の品質」を人ごと・プロダクトごとに定義できないためである。**測れない基準を指標に置くと、達成したことにできてしまう。**
+**This purpose is not measured directly as a metric.** Beyond the same reasons as the variable in §4, "a certain level of quality" cannot be defined per person or per product. **Put a standard that cannot be measured into a metric, and it can be declared achieved.**
 
-**したがって、目的が達成されたかを判定する手段は現時点で無い。** 目的として掲げることと、判定できることは別である。判定できないものを判定できるかのように書かない。
+**Accordingly, there is currently no means of judging whether the purpose has been achieved.** Holding it up as a purpose and being able to judge it are separate things. Do not write something that cannot be judged as if it could be.
 
-目的に反した兆候をどう捉えるかは未確定である（§18）。
+How to catch signs that run against the purpose is undecided (§18).
 
-## 2. スコープ
+## 2. Scope
 
-ローカルでの実装に留まらず、検証環境へのデプロイ、リリース前テスト、リリース準備、リリース作業までを含む。リリースまで含めないと外側ループが閉じない（実行結果が改善の唯一の材料であるため）。
+It does not stop at local implementation; it covers deployment to the verification environment, pre-release testing, release preparation, and the release itself. Without release, the outer loop does not close (because execution results are the only material for improvement).
 
-## 3. 適用範囲
+## 3. Applicability
 
-初期では新規開発のみを対象とする。既存サービスへの適用は後続で検討する（機能単位・モジュール単位での部分適用から入る想定）。
+Initially, only new development is in scope. Application to existing services will be considered later (the expectation is to enter through partial application per feature or per module).
 
-新規と既存では、欠ける適用条件が異なるため、難易度の差ではなく別の課題として扱う。
+New development and existing services lack different application conditions, so they are treated as separate problems, not as a difference in difficulty.
 
-| | 新規開発 | 既存サービスへの適用 |
+| | New development | Applying to an existing service |
 |---|---|---|
-| 気づけるか | ハーネスをゼロから育てる。初期が最も弱い | 既存テストと本番監視をある程度使える |
-| 戻せるか | 利用者がいないため広く戻せる | 稼働中のため戻せる範囲が狭い |
-| 記録されるか | 最初から組み込める | 後付けになる |
-| その他 | — | 既存コードの理解、暗黙の仕様、過去の設計判断の不在 |
+| Detectable | The harness is grown from zero. Weakest at the start | Existing tests and production monitoring can be used to some extent |
+| Reversible | No users, so broadly reversible | Running, so the reversible range is narrow |
+| Recorded | Can be built in from the start | Retrofitted |
+| Other | — | Understanding existing code, implicit specifications, absence of past design decisions |
 
-## 4. 最大化する変数
+## 4. The variable to maximize
 
-単位時間あたりの開発量ではなく、**人の関与あたりの成果**。
+Not development volume per unit of time, but **output per unit of human involvement**.
 
-「人が見たほうが安心」はこの変数を悪化させるため、原則として採用しない。
+"It feels safer if a human looks" worsens this variable, so as a rule it is not adopted.
 
-### 減らす対象は「安心のための確認」と手戻りであって、対話ではない
+### What to reduce is "checking for reassurance" and rework, not dialogue
 
-**十分に議論することは、良いプロダクトを作るために要る。** 何を作るかを聞き、見え方を決め、順序を合意する——これらは人の関与だが、**この変数を悪化させない。** 手戻りが減るなら、成果あたりの関与はむしろ下がる。
+**Discussing things thoroughly is necessary to build a good product.** Asking what to build, deciding how it looks, agreeing on the order — these are human involvement, but **they do not worsen this variable.** If they reduce rework, involvement per unit of output actually goes down.
 
-悪化させるのは次の2つである。
+What worsens it is these two.
 
-- **安心のための確認。** 検出手段が既にあるのに、人がもう一度見る
-- **手戻り。** 認識が違っていた、作り直しが要る
+- **Checking for reassurance.** A human looks again even though a means of detection already exists
+- **Rework.** The understanding was different; something has to be rebuilt
 
-**この区別を落とすと、必要な対話まで削られる。** 「停止を減らす」と読み替えた結果、要件を確かめずに進み、後で作り直すことになる。それは§4が求めるものの逆である。
+**Drop this distinction and even necessary dialogue gets cut.** Reading it as "reduce stops," one proceeds without confirming requirements and ends up rebuilding later. That is the opposite of what §4 asks for.
 
-停止の種別としての扱いは§6にある。
+How this is treated as a kind of stop is in §6.
 
-ただしこれは判断の原則であり、**指標として直接測定はしない**。人の関与時間は自己申告に依存し、記録する側に利得がないため形骸化する。欠測と実測の区別がつかないデータは、データが無いより判断を誤らせる。
+This is, however, a principle for judgment, and **it is not measured directly as a metric**. Human involvement time depends on self-reporting, and those recording it gain nothing from doing so, so it becomes a formality. Data that cannot tell missing values from measured ones misleads judgment more than having no data.
 
-外向きに効果を説明する場合は、案件単位の事後集計（携わった人の工数、AIのトークン消費、構築したシステムの規模）を用いる。既存の集計手段で足りるため、計測装置を作る必要はない。
+When explaining the effect externally, use per-engagement after-the-fact totals (the effort of the people involved, the AI's token consumption, the size of the system built). Existing means of totaling suffice, so there is no need to build measuring equipment.
 
-## 5. 構造：二重ループ
+## 5. Structure: two loops
 
-### 内側ループ（プロダクトを作る）
+### Inner loop (building the product)
 
-計画 → 実装 → 検証 → リリース。
+Plan → implement → verify → release.
 
-人のチェックポイントが乗ることがあるが、それらは**可動**であり、外側ループが外していく。
+Human checkpoints may sit on it, but they are **movable**, and the outer loop removes them.
 
-### 外側ループ（仕組みを直す）
+### Outer loop (fixing the machinery)
 
-観測 → 改善案の生成 → 人の承認 → 反映。
+Observe → generate improvement proposals → human approval → apply.
 
-ハーネス、スキル、委譲範囲そのものが改善対象。両ループを回すのはAIであり、人が承認するのは外側ループの反映と、内側ループの停止点のみ。
+The harness, skills, and the scope of delegation itself are the targets of improvement. The AI runs both loops; what the human approves is only the application of the outer loop and the stopping points of the inner loop.
 
-### 内側と外側の切り分け
+### Separating inner from outer
 
-ハーネスへの変更は、どちらのループにも現れる。区別は**委譲範囲の表（§8）のセルを動かすか**で行う。
+Changes to the harness appear in both loops. They are distinguished by **whether they move a cell in the delegation table (§8)**.
 
-| 変更 | ループ |
+| Change | Loop |
 |---|---|
-| 既存の検出手段に沿ったテストの追加 | 内側。網羅が広がるだけで、気づける／気づけないは動かない |
-| 新しい検出手段の導入（視覚回帰、アクセシビリティ検査など） | 外側。気づけない領域を気づける側へ動かす |
-| 領域の状態遷移（保留／観察中／委譲済み） | 外側 |
+| Adding tests along an existing means of detection | Inner. Coverage widens, but detectable / not detectable does not move |
+| Introducing a new means of detection (visual regression, accessibility checks, etc.) | Outer. Moves an undetectable area to the detectable side |
+| State transitions of an area (on hold / under observation / delegated) | Outer |
 
-**ハーネスの網羅が広がるのは内側、能力が変わるのは外側** である。日々のテスト追加まで外側として扱うと、立ち上げ期に人の承認が集中し、§4に反する。
+**Harness coverage widening is inner; harness capability changing is outer.** Treating everyday test additions as outer too would concentrate human approval in the bootstrap phase, contrary to §4.
 
-なお、改善が一般化できる場合の落ち先はリポジトリが分かれる。委譲範囲の表とプロジェクト固有のハーネスはプロダクト側に、スキルは参照実装側に落ちる。外側ループが回る場所とは別の問題である。
+Note that when an improvement can be generalized, where it lands splits by repository. The delegation table and the project-specific harness land on the product side; skills land on the reference implementation side. This is a separate question from where the outer loop runs.
 
-## 6. テレメトリが記録するもの
+## 6. What telemetry records
 
-テレメトリは外側ループの入力である。したがって**改善の判断に使うものだけを記録する**。説明のための指標は含めない。
+Telemetry is the input to the outer loop. Therefore **it records only what is used for improvement decisions**. Metrics for explanation are not included.
 
-### 必ず記録するもの
+### Must be recorded
 
-| 記録する対象 | 用途 |
+| What is recorded | Used for |
 |---|---|
-| 停止イベントの種別と頻度 | 繰り返し出る種別はスキル化・自動化の候補。**入力と手戻りを分けて数える**（下記） |
-| 手戻りと、その原因の内訳（要件のズレ／設計のズレ／実装バグ） | どの工程の精度が低いかの特定 |
-| 検出漏れ（後工程や本番で見つかった誤り） | ハーネスの弱点の特定 |
-| 抜き取り確認の結果（見た範囲・見なかった範囲・修正の有無） | 緩和の判定（§8）。ハーネスの未整備度の把握 |
-| 委譲範囲の変更と、その後の失敗の有無 | 緩和しきい値の妥当性の検証 |
+| Kinds and frequency of stop events | Kinds that recur are candidates for skills and automation. **Count input and rework separately** (below) |
+| Rework, and the breakdown of its causes (requirements drift / design drift / implementation bug) | Identifying which stage has low accuracy |
+| Missed detections (errors found in a later stage or in production) | Identifying weaknesses in the harness |
+| Results of spot checks (range looked at, range not looked at, whether anything was corrected) | Judging loosening (§8). Understanding how undeveloped the harness is |
+| Delegation changes, and whether anything failed afterwards | Verifying that loosening thresholds are sound |
 
-**5つに共通するのは、ハーネスのどこが弱いかを直接指し示すことである。** どれが欠けても、外側ループは直す場所を選べない。
+**What the five have in common is that they point directly at where the harness is weak.** Missing any one, the outer loop cannot choose where to fix.
 
-リードタイム（起票から本番リリースまで）は、TrackerとRepoのタイムスタンプから事後に導出できる。計測のための装置は設けない。
+Lead time (from filing to production release) can be derived after the fact from Tracker and Repo timestamps. No equipment is set up to measure it.
 
-### 記録してもよいもの
+### May be recorded
 
-| 記録する対象 | 用途 |
+| What is recorded | Used for |
 |---|---|
-| トークン消費とコスト | 見積もりの材料。探索が長引く作業の傾向把握。モデル構成の見直し |
+| Token consumption and cost | Material for estimates. Understanding tendencies of work where exploration drags on. Reviewing the model configuration |
 
-**欠けていることを不備として扱わない。** 記録してよいが、有効性の判定（§9）をトークンの有無で落とさない。
+**Do not treat its absence as a defect.** It may be recorded, but the judgment of whether something is active (§9) is not failed on the presence or absence of tokens.
 
-**上の5つとは性質が違う。トークン消費は量であって、どこを直すかを指さない。** §6の冒頭が「改善の判断に使うものだけを記録する。説明のための指標は含めない」としている以上、判断に使われないなら、必ず記録するものに置き続ける根拠が無い。
+**It is different in nature from the five above. Token consumption is a quantity; it does not point at what to fix.** Since the opening of §6 says "records only what is used for improvement decisions. Metrics for explanation are not included," if it is not used for decisions, there is no ground for keeping it among what must be recorded.
 
-**実績で確かめている。** 参照実装で外側ループを一周させたとき、委譲範囲の表を動かした根拠は検出漏れの内訳であり、**変更履歴にトークンへの言及は1件も無かった。** 記録473行のうち233行（49%）がトークンであり、約1ヶ月ためて判断に使われた回数は0である。
+**This is confirmed by the record.** When the outer loop was run once around in the reference implementation, the ground for moving the delegation table was the breakdown of missed detections, and **the change history contained not a single mention of tokens.** Of 473 record lines, 233 (49%) were tokens, and over roughly a month of accumulation they were used for a decision 0 times.
 
-必ず記録するものであることが、構造的な問題も1つ作っていた。**トークン消費はランタイム由来であり、書かれるのは作業単位の提出より後になる。** 上の5つは作業の最中に書かれるため提出に乗るが、これだけは乗らない。後から拾う仕掛けで補えるのは、同じ作業場が残っている場合に限られ、**作業単位ごとに作業場を作って捨てる並列実行とは両立しない。**
+Being something that must be recorded also created a structural problem. **Token consumption comes from the runtime, and is written after the work item's submission.** The five above are written during the work and so ride the submission; this one alone does not. A mechanism that picks it up later can compensate only when the same workspace remains, and **it is incompatible with parallel execution that creates and discards a workspace per work item.**
 
-**必ず記録するものでなければ、補う仕掛けが要らない。** 取りこぼしたぶんは記録に現れず、それでよい。
+**If it is not something that must be recorded, no compensating mechanism is needed.** Whatever is missed does not appear in the records, and that is fine.
 
-#### モデル識別子とは別の話である
+#### This is a separate matter from the model identifier
 
-**トークン消費と使用モデルを、ひとまとまりに扱わないこと。** どちらもランタイム由来だが、**モデル識別子は必須属性であり（下記）、任意になったのはトークン消費とコストだけである。**
+**Do not treat token consumption and the model used as a single bundle.** Both come from the runtime, but **the model identifier is a required attribute (below); only token consumption and cost became optional.**
 
-束ねて書くと、片方を止めたときにもう片方まで落ちる。モデル識別子が無ければ、必須の5つを記録してもモデル構成の比較ができない。
+Written as a bundle, stopping one drops the other too. Without the model identifier, even recording the five required items does not allow comparing model configurations.
 
-### 停止には2種類ある
+### There are two kinds of stop
 
-**すべての停止が減らす対象ではない。** 一括りにすると、必要な対話まで削られる。
+**Not every stop is something to reduce.** Lumping them together cuts even necessary dialogue.
 
-| 種類 | 例 | 扱い |
+| Kind | Examples | Treatment |
 |---|---|---|
-| **入力を得る停止** | 何を作るかのヒアリング、見え方の決定、順序の合意、資格情報の発行 | **手法が正しく働いている。** 減らす対象ではない |
-| **手戻りによる停止** | 認識が違っていた、作り直しが要る、承認で差し戻された | **減らす対象。** どの工程の精度が低いかを示す |
+| **Stop to obtain input** | Hearing what to build, deciding how it looks, agreeing on the order, issuing credentials | **The method is working correctly.** Not something to reduce |
+| **Stop due to rework** | The understanding was different, something has to be rebuilt, it was sent back at approval | **Something to reduce.** Shows which stage has low accuracy |
 
-記録する時点で、どちらかを区別できる形にすること。**後から分類し直すと、分類した側の解釈が入る**（手戻りの原因の内訳と同じ理由）。
+At the time of recording, make it possible to tell which one it is. **Reclassifying later brings in the interpretation of whoever reclassified** (the same reason as the breakdown of rework causes).
 
-#### 同じことを繰り返し聞くのは、入力ではなく手戻りである
+#### Asking the same thing again is rework, not input
 
-**この歯止めが無いと、「対話だから減らさなくてよい」と言い張って止まり続けられる。**
+**Without this safeguard, one can keep stopping by insisting "it's dialogue, so it need not be reduced."**
 
-一度決めたことを聞き直しているなら、決めた内容が残っていないか、読まれていない。**入力の停止として数えず、手戻りとして扱う。**
+If something once decided is being asked again, the decision was either not kept or not read. **Do not count it as an input stop; treat it as rework.**
 
-### イベントの必須属性
+### Required attributes of events
 
-すべてのイベントは、**作業単位のID** と **使用したモデルの識別子** を属性として持つ。
+Every event carries the **work item ID** and the **identifier of the model used** as attributes.
 
-前者がないとチケット単位の分析ができず、後者がないとモデル構成を見直す際の比較ができない。いずれも後から遡って付与できないため、記録の開始時点から必須とする。
+Without the former, per-ticket analysis is impossible; without the latter, there is nothing to compare when reviewing the model configuration. Neither can be attached retroactively, so they are required from the moment recording starts.
 
-#### 作業単位に帰属しないやり取り
+#### Exchanges not attributable to a work item
 
-作業単位を起こすかどうかの検討や、起票される前の依頼は、**どの作業単位にも属さない。** それでもランタイム由来の記録（トークン消費）は発生する。
+Deliberating whether to raise a work item, or requests before anything has been filed, **belong to no work item.** Records that come from the runtime (token consumption) are still produced.
 
-**これらは§6のイベントではない。** 上記の必須属性は§6が挙げた記録対象に課すものであり、どの作業単位にも属さないやり取りは、そもそもその対象に当たらない。属性を欠いた§6のイベントとして扱うと、正しく動いた記録が不備として現れ、しかも遡って付与できないため解消できない状態になる。
+**These are not §6 events.** The required attributes above are imposed on the targets §6 lists for recording, and exchanges that belong to no work item are not such targets in the first place. Treating them as §6 events missing attributes would make correctly working records appear as defects, and since the attributes cannot be attached retroactively, it would become a state that cannot be resolved.
 
-**トークン消費を記録する場合は**、次の2点を満たすこと。記録しない選択を取った場合、この2点は適用されない。
+**When recording token consumption**, satisfy the following two points. If the choice is not to record it, these two points do not apply.
 
-- **記録を捨てないこと。** 費用は実在する。§6のイベント列とは別の器に、帰属できなかった理由とともに残す
-- **件数が読めること。** 帰属しないやり取りが増えることは、作業単位を起こす前の探索が増えているという信号であり、外側ループが読む材料になる
+- **Do not discard the records.** The cost is real. Keep them in a container separate from the §6 event stream, together with the reason they could not be attributed
+- **Keep the count readable.** An increase in unattributed exchanges is a signal that exploration before raising a work item is growing, and is material the outer loop reads
 
-**帰属できるものは必ず紐づける。** 帰属しないと扱ってよいのは、仕組みの上で紐づけようがない場合に限る。「帰属できなかった」と名乗れば属性を省けるのであれば、必須である意味が消える。
+**Whatever can be attributed must be linked.** Treating something as unattributed is allowed only when there is no way to link it in the mechanism. If one could omit attributes by declaring "could not attribute," being required would lose its meaning.
 
-#### 厳密さをどこまで求めるか
+#### How strict to be
 
-作業単位に属さないやり取りをゼロにするには、起票せずに作業を始めることを妨げる仕掛けが要る。**それを設けるかは、費用と効果で判断する。**
+Bringing unattributed exchanges to zero would require a mechanism that prevents starting work without filing. **Whether to set one up is judged on cost and effect.**
 
-この定義の立場は、**設けないことを既定とする。** 帰属しない部分の量は全体から見て小さく、そこを厳密にするために費やす労力は、同じ労力を他へ向けたほうが§4（人の関与あたりの成果）に効く。**可能なかぎり紐づけ、仕組みの上で紐づけられないものは諦める。**
+This definition's position is that **not setting one up is the default.** The unattributed portion is small relative to the whole, and the effort spent making it strict works better for §4 (output per unit of human involvement) when directed elsewhere. **Link whenever possible; give up on what cannot be linked in the mechanism.**
 
-これは測定の放棄ではない。件数が読める以上、量が無視できなくなればその時点で判断をやり直せる。
+This is not abandoning measurement. Since the count is readable, the judgment can be redone as soon as the amount can no longer be ignored.
 
-### トークン消費の扱いに関する注意
+### Caution on handling token consumption
 
-トークン量は工数の代理指標にはならない。同じ量でも、要件が曖昧で探索に費やした場合と、素直に実装した場合とでは意味が異なる。
+Token volume is not a proxy for effort. The same amount means different things depending on whether it was spent exploring ambiguous requirements or implementing straightforwardly.
 
-見積もりに用いる場合は、性質の近い作業単位の実績を参照する形とし、単価と量の積で工数を換算しない。
+When used for estimates, do so by referring to the actual results of work items of similar nature; do not convert to effort as unit price times volume.
 
-## 7. 適用条件
+## 7. Application conditions
 
-| 条件 | 内容 |
+| Condition | Meaning |
 |---|---|
-| 戻せること | 誤りが外に出ても取り消せる範囲に収まる |
-| 記録されること | プロセス自体の詰まりと失敗が残り、改善対象にできる |
+| Reversible | Even if an error gets out, it stays within a range that can be undone |
+| Recorded | The process's own blockages and failures remain, and can be made targets of improvement |
 
-**「気づけること」（誤りが自動で・速く・外に出る前に現れること）は、前提条件ではなく外側ループが最初に育てる対象とする。** 新規開発の初期にはハーネスが存在しないため、これを条件として置くと成立しなくなる。立ち上げ期の最優先課題は、検出手段を作ることである。
+**"Detectable" (errors surface automatically, quickly, before getting out) is not a precondition but the first thing the outer loop grows.** In the early stage of new development no harness exists, so making it a condition would make the method impossible. The top priority in the bootstrap phase is building means of detection.
 
-なお、作り直しの工数は条件に含めない。この手法の下ではAIが作り直すため、ほぼ消える。
+Note that the effort of rebuilding is not included in the conditions. Under this method the AI does the rebuilding, so it nearly disappears.
 
-## 8. 委譲範囲の運用
+## 8. Operating the scope of delegation
 
-**どこまでをAIに任せているかを表にする。これを「委譲範囲の表」と呼ぶ。**
+**Put in a table how much is entrusted to the AI. This is called the "delegation table."**
 
-以前は「レビュー境界」「境界表」と呼んでいたが、**何の境界なのかが読めなかった**（AUT-133）。指しているものは変わっていない。
+It used to be called the "review boundary" or "boundary table," but **it was unreadable what it was a boundary of** (AUT-133). What it refers to has not changed.
 
-参照実装が置くファイル名（`boundaries.yaml`、`boundary-changes.md`）は変えない。**既に配った先が壊れるうえ、読みにくさの原因はファイル名ではない。**
+The file names the reference implementation places (`boundaries.yaml`, `boundary-changes.md`) are not changed. **It would break places already distributed to, and the file names are not what made it hard to read.**
 
-委譲範囲は**気づけるか**（自動検出のしやすさ）と**戻せるか**（誤りが外に出たときに取り消せるか）の2軸で決まり、時間とともに動く。
+The scope of delegation is determined by two axes, **detectable** (how easily errors are detected automatically) and **reversible** (whether an error that gets out can be undone), and it moves over time.
 
-|  | 気づけない<br><span style="font-weight:normal">人が見ないと分からない<br>（UIの崩れ、文言の違和感）</span> | 気づける<br><span style="font-weight:normal">テストや型が落ちる<br>（自動で失敗が出る）</span> |
+|  | Not detectable<br><span style="font-weight:normal">Unknown unless a human looks<br>(broken UI, awkward wording)</span> | Detectable<br><span style="font-weight:normal">Tests or types fail<br>(failures appear automatically)</span> |
 |---|---|---|
-| **戻せない**<br>送金・本番データ削除・外部公開 | 固定条件 | 自動ゲート＋人が発火 |
-| **戻せる**<br>作り直し・再デプロイで消える | 抜き取り確認 | 完全委譲 |
+| **Not reversible**<br>Money transfer, production data deletion, external publication | Fixed condition | Automated gate + human trigger |
+| **Reversible**<br>Gone with a rebuild or redeploy | Spot check | Full delegation |
 
-**戻せない × 気づけない = 固定条件**、と覚える。
+Remember it as **not reversible × not detectable = fixed condition**.
 
-### 運用ルール
+### Operating rules
 
-- 領域は、**判定と記録が一意にできる粒度**で定める（例：操作×対象）。粒度そのものは参照実装側で決めてよい
-- 各領域は「保留 → 観察中 → 委譲済み」の3状態を持つ
-- **緩和**：観察中でN回連続して人の修正が入らなければ委譲済みへ
-- **締め直し**：委譲済みで失敗が出たら観察中へ戻す。緩和と締め直しは必ず対で運用する
-- 変更の**提案はAI、承認は人、履歴は必ず残す**
-- 人の関与はゼロには収束せず、左上・右上・左下に集まって止まる。残った関与は、検出手段の弱点の在り処を示す指標として読む
+- Areas are set at **a granularity at which judgment and recording are unambiguous** (e.g. operation × target). The granularity itself may be decided on the reference implementation side
+- Each area has three states: "on hold → under observation → delegated"
+- **Loosening**: if N consecutive times under observation pass without human correction, move to delegated
+- **Tightening back**: if a failure occurs while delegated, return to under observation. Loosening and tightening back are always operated as a pair
+- For changes, **the AI proposes, the human approves, and the history is always kept**
+- Human involvement does not converge to zero; it gathers and settles in the top-left, top-right, and bottom-left. Read the remaining involvement as an indicator of where the means of detection is weak
 
-#### 承認は「変更を統合する」の事実から導出する
+#### Approval is derived from the fact of "Integrate change"
 
-**承認を宣言で表さないこと。** 「承認済み」と書かれた履歴は、書いた側が承認を名乗れる。委譲範囲を動かすのはAIであり、その承認をAIが書ける形にすると、委譲範囲の表が自己申告になる。
+**Do not express approval by declaration.** A history saying "approved" lets whoever wrote it claim approval. It is the AI that moves the scope of delegation, and making that approval writable by the AI turns the delegation table into self-reporting.
 
-委譲範囲を動かした変更に対する**「変更を統合する」（§16）が実行された事実**をもって承認とする。この操作は不可逆区分であり、人の発火を要する。したがってAIは提案までしか到達できない。
+**The fact that "Integrate change" (§16) was executed** on a change that moved the scope of delegation is taken as approval. This operation is in the irreversible category and requires a human trigger. Therefore the AI can get only as far as proposing.
 
-- **承認の記録を別に持たない。** 統合の事実は Repo が保持しており、二重に持つと片方だけが更新されて食い違う（§16の記録規約と同じ理由）
-- **表を置いた最初の変更は、承認の対象だが起動の証拠にはならない。** 表を用意することと、表を動かすことは別である
-- 判定に用いる資格情報には、**統合されたかを読む権限** が要る。読めない場合、外側ループが起動したとは判定できない。**判定できない状態を通過として扱わないこと**（§9）
+- **Do not keep a separate record of approval.** Repo holds the fact of integration, and holding it twice means only one side gets updated and they disagree (the same reason as the recording conventions in §16)
+- **The first change that places the table is subject to approval but is not evidence of the loop having started.** Preparing the table and moving the table are different things
+- The credentials used for judgment need **permission to read whether something was integrated**. If they cannot read it, the outer loop cannot be judged to have started. **Do not treat a state that cannot be judged as passing** (§9)
 
-何をもって「セルが動いた」とするかの粒度は、参照実装側で定めてよい。ただし**宣言に依らず、委譲範囲の表そのものの差分から導出できること。**
+The granularity of what counts as "a cell moved" may be set on the reference implementation side. However, **it must be derivable from the diff of the delegation table itself, not from a declaration.**
 
-### 抜き取り確認
+### Spot checks
 
-対象は**動くプロダクトの見え方に限る**。コードと設計書は含まない（§10）。
+The target is **limited to how the working product looks**. Code and design documents are not included (§10).
 
-目的は誤りの網羅的な発見ではなく、その領域を委譲済みへ緩めてよいかの観測である。誤りが取り消せる領域であるため、全件を見つける必要はない。
+The purpose is not exhaustive discovery of errors but observing whether the area may be loosened to delegated. Since errors in these areas can be undone, not every one needs to be found.
 
-**何を見るかは人が選んでよい。** 見たい箇所を選んで見て、それでも修正が入らなかったのであれば、無作為に選んだ場合より強い根拠になる。選択の偏りは緩和を厳しくする方向に働く。
+**The human may choose what to look at.** If they choose the places they want to see, look, and still make no correction, that is stronger evidence than choosing at random. Selection bias acts in the direction of making loosening stricter.
 
-ただし次の2点を満たすこと。
+The following two points must, however, be satisfied.
 
-- **見なかった範囲が記録に残ること。** 見ていないのか、見て問題が無かったのかを区別できない記録は、判断を誤らせる（§4と同じ理由）
-- **修正率を指標として計算しないこと。** 偏った選択から得た率は母数の意味が定まらない。緩和の判定はN回連続で修正が入らないことで行う
+- **The range not looked at remains in the record.** A record that cannot distinguish not having looked from having looked and found no problem misleads judgment (the same reason as §4)
+- **Do not calculate a correction rate as a metric.** A rate obtained from a biased selection has no well-defined denominator. Loosening is judged by N consecutive times without correction
 
-都度確認が要るほどリスクが高い対象は、抜き取りではなく保留に置く。抜き取りで見逃し、後工程で見つかった誤りは検出漏れ（§6）として記録する。
+Targets risky enough to need confirmation every time are put on hold, not spot-checked. Errors missed by spot checks and found in a later stage are recorded as missed detections (§6).
 
-#### 選択は委譲範囲の宣言である
+#### Selection is a declaration of the scope of delegation
 
-継続的に見ていない領域は、宣言の有無にかかわらず委譲済みである。したがって、実際の確認行動と委譲範囲の状態のズレは、外側ループが読むべき信号となる。
+An area that is not continuously looked at is delegated, whether declared or not. Therefore a gap between actual checking behavior and the state of the scope of delegation is a signal the outer loop should read.
 
-| ズレ | 読み方 |
+| Gap | How to read it |
 |---|---|
-| 委譲済みなのに人が見続けている | 緩めるのが早かった。観察中へ戻す候補 |
-| 観察中なのに誰も見ていない | 暗黙に委譲されている。§9で、有効でないものが有効として通る事故と同種 |
+| Delegated, but a human keeps looking | Loosened too early. A candidate to return to under observation |
+| Under observation, but nobody is looking | Implicitly delegated. The same kind of accident as, in §9, something not active passing as active |
 
-#### 対象の2種
+#### Two kinds of target
 
-| 種別 | 例 | 扱い |
+| Kind | Examples | Treatment |
 |---|---|---|
-| 一時的に気づけない | レイアウト崩れ、通知の描画 | ハーネス化の対象。確認結果はベースラインとして固定し、「気づける」側へ移す |
-| 恒久的に気づけない | 並び順の妥当性、文言の自然さ | オラクルが無い。定常的に残る |
+| Temporarily not detectable | Broken layout, rendering of notifications | A target for harnessing. Fix the check result as a baseline and move it to the "detectable" side |
+| Permanently not detectable | Soundness of sort order, naturalness of wording | No oracle. Remains steadily |
 
-前者に溜まる量は、ハーネスの未整備度を示す。減らない場合、外側ループが機能していないと読む。
+The amount accumulating in the former shows how undeveloped the harness is. If it does not decrease, read it as the outer loop not functioning.
 
-## 9. 固定条件と不変条件
+## 9. Fixed conditions and invariants
 
-### 固定条件
+### Fixed conditions
 
-本番データの破壊的操作、金銭の移動、外部への不可逆な公開。実績が積まれても緩めない。
+Destructive operations on production data, movement of money, irreversible external publication. Not loosened no matter how much track record accumulates.
 
-### 不変条件
+### Invariants
 
-- 外側ループが起動し、継続すること
-- テレメトリが記録されること
-- 委譲範囲の変更が履歴に残ること
-- AIがこれらを無効化できないこと
+- The outer loop starts and keeps running
+- Telemetry is recorded
+- Delegation changes stay in the history
+- The AI cannot disable any of these
 
-不変条件は人の作業ではなく、**ハーネスの既定動作として組み込む**。この状態を**有効**と呼ぶ。人が意識しなくても守られ、忘れることができない状態を指す。
+Invariants are built in **as the default behavior of the harness**, not as human work. This state is called **active**. It refers to a state that is maintained without anyone being conscious of it, and that cannot be forgotten.
 
-#### 立ち上げ期の例外
+#### Exception for the bootstrap phase
 
-記録の仕組みを作る作業には、まだその仕組みが存在しない。したがって立ち上げ期に限り、不変条件を人が手で代替することを認める。ただし次の2点を満たすこと。
+The work of building the recording machinery does not yet have that machinery. Therefore, only in the bootstrap phase, substituting invariants by human hand is allowed. The following two points must, however, be satisfied.
 
-- 代替した事実を記録に残すこと
-- **不変条件が有効になっていない状態を、機械的に検出できること**。宣言だけでは、接続されないまま運用が続く事故を防げない
+- The fact of substitution is left in the records
+- **A state in which an invariant is not active can be detected mechanically**. A declaration alone cannot prevent the accident of operating on without it ever being connected
 
-有効かどうかを判定できない状態は、それ自体を失敗として扱う。
+A state in which it cannot be judged whether something is active is itself treated as a failure.
 
-不変条件は、次の4つのいずれかの状態を取る。**どれも「いま何であるか」を言う。**
+An invariant takes one of the following four states. **Each says what something currently is.**
 
-| 状態 | 意味 | 失敗か |
+| State | Meaning | Failure? |
 |---|---|---|
-| **有効** | 仕組みとして働いている | |
-| **代替** | まだ仕組みになっておらず、人が肩代わりしている。**代替した事実が記録にある** | |
-| **要対応** | 肩代わりの記録が無い、または有効かどうかを判定できない | **失敗** |
-| **対象外** | この判定の範囲では扱わない（横断でしか判定できない項目など） | |
+| **Active** | Working as machinery | |
+| **Substituted** | Not machinery yet; a human is covering for it. **The fact of the substitution is in the records** | |
+| **Unresolved** | No record of anyone covering it, or it cannot be judged whether it is active | **Failure** |
+| **Out of scope** | Not handled within the range of this judgment (such as items that can only be judged across repositories) | |
 
-**代替であること自体は失敗ではない**（立ち上げ期の例外）。失敗として扱うのは要対応だけである。
+**Being substituted is not itself a failure** (exception for the bootstrap phase). Only unresolved is treated as failure.
 
-### 実装上の注意
+### Implementation notes
 
-プロセス層（AIへの指示）だけに固定条件を置くと、指示の書き換えで抜けうる。**実行基盤層の権限設定にも同じ制約を置き、二重にする** こと。ただし権限設定にも限界があり（AIが自作したスクリプト経由の操作は止められない）、OSレベルで強制するにはサンドボックスの併用が必要となる。
+Placing fixed conditions only in the process layer (instructions to the AI) leaves them open to being bypassed by rewriting the instructions. **Place the same constraints in the permission settings of the execution platform layer too, making them double.** Permission settings have limits as well, however (operations through scripts the AI wrote itself cannot be stopped), and enforcing at the OS level requires using a sandbox alongside.
 
-## 10. 役割
+## 10. Roles
 
-### 人の役割
+### Human role
 
-- What/Whyの提示
-- 任せない領域の定義
-- 停止点での判断
-- 抜き取り確認（§8）
-- 外側ループの改善案の承認
-- 受け入れ確認（出口にゲートを残す場合。§14）
-- リリースの発火
+- Presenting the What/Why
+- Defining areas not to entrust
+- Deciding at stopping points
+- Spot checks (§8)
+- Approving outer-loop improvement proposals
+- Acceptance checks (when a gate is kept at the exit. §14)
+- Triggering releases
 
-**設計書とコードのレビューは含まない。** 受け入れ確認を残す場合も、対象は動くプロダクトであり、中間成果物ではない。この区別が崩れると、承認用の成果物を作る工程が内側ループに戻る。
+**Reviewing design documents and code is not included.** Even when acceptance checks are kept, the target is the working product, not intermediate artifacts. If this distinction collapses, the step of producing artifacts for approval comes back into the inner loop.
 
-### AIの職責
+### Responsibility of the AI
 
-人の役割を限定する以上、限定した分はAIが引き受ける。**AIはシステム開発の専門家として扱われる。** 規約や手順を満たすことは、その水準を満たしたことの説明にならない。
+Since the human role is limited, the AI takes on what was limited. **The AI is treated as an expert in system development.** Satisfying conventions and procedures does not explain having met that standard.
 
-#### 規約の位置づけ
+#### What conventions are for
 
-規約は判断を縛るために置かれているのではなく、**判断の結果を検証可能にするために置かれている。** したがって「規約に従った」は設計の正しさの根拠にならない。
+Conventions are not there to bind judgment but **to make the results of judgment verifiable.** Therefore "I followed the convention" is not a ground for a design being correct.
 
-#### 制約と自分の推論を区別する
+#### Distinguish constraints from your own reasoning
 
-「〜してはいけない」と判断したとき、その出所を言えること。
+When you judge that "this must not be done," be able to say where that comes from.
 
-| 出所 | 扱い |
+| Source | Treatment |
 |---|---|
-| 定義・規約 | 制約。変えるには承認の経路を通る |
-| **自分の推論** | **制約ではない。** 設計判断であり、他の案と比べる対象になる |
+| The definition / conventions | A constraint. Changing it goes through the path of approval |
+| **Your own reasoning** | **Not a constraint.** It is a design judgment, to be compared with other options |
 
-出所を確かめずに自分の推論を制約として扱うと、**存在しない制約を回避するための設計が残る。** その設計が新しい欠陥を生んでも、規約を守った結果に見えるため気づきにくい。
+Treating your own reasoning as a constraint without checking its source **leaves behind designs that work around constraints that do not exist.** Even if such a design creates new defects, it looks like the result of following the conventions, so it is hard to notice.
 
-#### 設計上の欠陥を、規約の遵守や人の手間の削減と引き換えにしない
+#### Do not trade a design defect for compliance with conventions or for saving human effort
 
-両立しない場合は、両立しない事実と取りうる案を示す。片方を黙って選ばないこと。選んだ結果だけを報告することは、§10の停止点での判断を人から奪うことにあたる。
+When they cannot both be satisfied, show that fact and the options available. Do not silently choose one. Reporting only the result of the choice amounts to taking away from the human the decision at the stopping point in §10.
 
-人の要望を採るときも、それが設計として正しいかを別に検証する。**要望に沿えたことを結論にしない。** 指示の背後にある意図まで踏まえること。指示どおりに作って要求を満たさないものより、意図を確かめて作り直すほうがよい。
+When adopting a human's request, verify separately whether it is correct as a design. **Do not make "met the request" the conclusion.** Take into account the intent behind the instruction. It is better to confirm the intent and rebuild than to build exactly as instructed and not meet the need.
 
-ただし**決めるのは人である。** 示すところまでが職責であり、押し通すことではない。ここを取り違えると、指摘が増えるだけで前に進まなくなり、§4の「人の関与あたりの成果」を下げる。
+**It is the human who decides**, however. The responsibility extends to showing, not to pushing through. Get this wrong and only the objections increase without anything moving forward, lowering §4's "output per unit of human involvement."
 
-## 11. 要件定義のパターン
+## 11. Patterns for requirements definition
 
-クライアント導入時、要件定義の進め方は主に3パターンに分かれる。
+When introducing this at a client, the way requirements definition proceeds falls mainly into three patterns.
 
-| | パターン1 | パターン2 | パターン3 |
+| | Pattern 1 | Pattern 2 | Pattern 3 |
 |---|---|---|---|
-| 同席する関係者 | 要件の決定権を持つ関係者がAIと同席 | 一部の関係者が同席できない | 誰も同席しない |
-| 進め方 | 要件定義からAIが入り、対話で固める | 主要部分を人が決め、残りをAIが詰める | 要件定義は人が完了、AIは設計以降 |
-| AIが持つ文脈 | 経緯を含めて全量 | 結論のみ。経緯が欠落 | 結論のみ |
-| 停止点の扱い | その場で解消 | 後から浮上する | ほぼ機能しない |
-| 評価 | 推奨 | 制約下での次善 | 非推奨 |
+| Stakeholders present | Stakeholders with authority over requirements sit with the AI | Some stakeholders cannot be present | Nobody is present |
+| How it proceeds | The AI enters from requirements definition and firms them up through dialogue | Humans decide the main parts, the AI fills in the rest | Humans complete requirements definition; the AI works from design onward |
+| Context the AI has | All of it, including the history | Conclusions only. The history is missing | Conclusions only |
+| Handling of stopping points | Resolved on the spot | Surface later | Barely function |
+| Assessment | Recommended | Second best under constraints | Not recommended |
 
-パターン3を非推奨とするのは効果が薄いからではなく、**この手法として成立しないため** である。AIが要件に触れない場合、内側ループの入口が人のレビュー成果物に固定される。その場合は仕様駆動開発のように、人が成果物を確かめて進む形を選ぶべきであり、無理に本手法を適用しない。
+Pattern 3 is not recommended not because it is less effective but because **it does not hold as this method.** If the AI does not touch the requirements, the entrance to the inner loop is fixed to human review artifacts. In that case one should choose a form in which humans confirm artifacts and proceed, like spec-driven development, rather than forcing this method.
 
-### パターン2で渡すべきもの
+### What to hand over in Pattern 2
 
-一部の関係者が同席できない場合、その関係者由来の経緯が欠落する。これは明確なデメリットであるため、結論だけでなく経緯を含めて渡す。
+When some stakeholders cannot be present, the history originating from them is missing. This is a clear disadvantage, so hand over not only conclusions but also the history.
 
-| 渡すもの | 理由 |
+| What to hand over | Why |
 |---|---|
-| 検討の過程 | 結論だけではAIが前提を再発明するか、誤った前提で進む |
-| 却下した案と却下理由 | 最も価値が高い。渡さないとAIが同じ案を再提案する |
-| 制約の出所 | 法規制か担当者の好みかで交渉可能性が変わる |
-| 未決事項の明示 | 空白を示さないとAIが勝手に埋める |
-| 確定度のラベル | 確定／暫定／要検証を区別する |
+| The course of deliberation | With conclusions alone, the AI reinvents the premises or proceeds on wrong ones |
+| Rejected options and the reasons | The most valuable. Without them, the AI proposes the same options again |
+| Where constraints come from | Whether it is regulation or a person's preference changes how negotiable it is |
+| Explicit open items | Without showing the gaps, the AI fills them in on its own |
+| Certainty labels | Distinguish settled / provisional / needs verification |
 
-**確定度のラベルが実務上もっとも効く。** 人が固めた要件はAIから見て決定済みに見えるため、矛盾があっても指摘せず従う。暫定と記されていれば停止点として上げられる。
+**Certainty labels are the most effective in practice.** Requirements firmed up by humans look decided from the AI's point of view, so it follows them without pointing out contradictions. If marked provisional, they get raised as stopping points.
 
-### パターン2を1に近づける仕掛け
+### A mechanism to bring Pattern 2 closer to Pattern 1
 
-人が固めた要件に対してAIに逆インタビューさせるステップを挟む。欠けた前提と矛盾がその場で洗い出され、経緯の一部を事後的に復元できる。
+Insert a step in which the AI reverse-interviews against the requirements humans firmed up. Missing premises and contradictions are brought out on the spot, and part of the history can be reconstructed after the fact.
 
-## 12. 担い手
+## 12. Who carries it out
 
-到達できるプロダクトの難易度と品質の上限が変わるだけで、成立可否は変わらない。非エンジニア単独でも個人開発アプリ相当までは到達し、エンジニアと組めば難易度の高いプロダクトに届く。
+Only the upper limit of the difficulty and quality of the product that can be reached changes; whether it holds does not. A non-engineer alone reaches about the level of a personal-project app, and paired with an engineer, reaches highly difficult products.
 
-最終形はプロダクトオーナー＋テックアーキテクトのチーム。初期はエンジニアがHubとなり外側ループを代行する。**移行の完了条件は習熟や人数ではなく、外側ループの自動化度合いで測る。**
+The final form is a team of a product owner and a tech architect. Initially an engineer acts as the hub and stands in for the outer loop. **The completion condition of the transition is measured not by proficiency or headcount but by how automated the outer loop is.**
 
-なお外側ループはAIが権限を持つ範囲内でしか改善できないため、AIが手を出せない層（CI/CD基盤、権限、予算）の整備は人が先回りする。ここが到達点の天井を決める。
+Note that the outer loop can improve only within the range the AI has permissions for, so humans prepare ahead the layers the AI cannot touch (CI/CD platform, permissions, budget). This sets the ceiling of what can be reached.
 
-## 13. メリット
+## 13. Benefits
 
-1. 人の関与あたりの成果が大きい
-2. ビジネスや技術の専門家でなくても、一定品質のアプリと開発フローを構築できる
-3. 意思決定ログ・作業ログ・検証ハーネスが揃った状態でプロダクトが完成するため、**その資産をそのまま保守フェーズに引き継げる**
+1. Large output per unit of human involvement
+2. Apps and development flows of a certain quality can be built even without being an expert in business or technology
+3. The product is completed with decision logs, work logs, and a verification harness in place, so **those assets can be carried over as-is into the maintenance phase**
 
-## 14. 他の進め方との関係
+## 14. Relation to other ways of working
 
-### 仕様駆動開発（SDD）との違い
+### How it differs from spec-driven development (SDD)
 
-**最も比べられる相手である。** 仕様駆動開発は、仕様を先に固め、そこから設計・タスク・実装を導く進め方を指す。GitHub Spec Kit や AWS Kiro がその実装にあたる。
+**It is the one most often compared.** Spec-driven development refers to firming up a specification first and deriving design, tasks, and implementation from it. GitHub Spec Kit and AWS Kiro are implementations of it.
 
-**AIに書かせる点は同じである。違うのは、誰が誤りを見つけるかである。**
+**Having the AI write is the same. What differs is who finds the errors.**
 
-| | 仕様駆動開発 | 本手法 |
+| | Spec-driven development | This method |
 |---|---|---|
-| 中間成果物 | 仕様・設計・タスクを段ごとに作る | **作らない。** 作るなら実装の材料としてであり、承認の対象にしない |
-| 誤りを見つけるのは | **人。** 生成された成果物を読んで直す | **実行結果と自動検証**（§1） |
-| 設計・コードのレビュー | 人が行う | **AIが行う。** 人は動くものの見え方だけを見る（§8 抜き取り確認） |
-| どこまで任せるか | 手法が定める。変えるならテンプレートを書き換える | **記録から測って動かす**（§8 委譲範囲の表） |
-| 見つける力の改善 | 利用者が手で行う | **外側ループが回す。** 提案はAI、承認は人（§5） |
+| Intermediate artifacts | Specification, design, and tasks are produced stage by stage | **Not produced.** If produced, it is as material for implementation, not as a target of approval |
+| Who finds errors | **Humans.** They read the generated artifacts and fix them | **Execution results and automated verification** (§1) |
+| Review of design and code | Done by humans | **Done by the AI.** Humans look only at how the working thing looks (§8 spot checks) |
+| How much to entrust | Set by the method. Changing it means rewriting templates | **Measured from records and moved** (§8 delegation table) |
+| Improving the ability to find | Done by hand by the user | **Run by the outer loop.** The AI proposes, the human approves (§5) |
 
-段を踏んで成果物を作る形は、**人が読む量を増やす。** 仕様・設計・タスクがそれぞれ文書として出てくるため、**AIが速く書くほど、人の読む量が増える。** §4が最大化しようとしている「人の関与あたりの成果」は、そこで下がる。
+The form of producing artifacts stage by stage **increases the amount humans read.** Specification, design, and tasks each come out as documents, so **the faster the AI writes, the more humans must read.** "Output per unit of human involvement," which §4 tries to maximize, drops there.
 
-本手法が中間成果物の承認を置かないのは、手抜きではない。**人を検出手段から外さない限り、AIがいくら速くても人の読む速度が上限になるからである**（§11 パターン3と同じ理由）。
+This method not placing approval of intermediate artifacts is not cutting corners. **Unless humans are removed from being the means of detection, however fast the AI is, human reading speed becomes the upper limit** (the same reason as §11 Pattern 3).
 
-**代わりに何で守るのか。** 実行結果と自動検証（§1）、任せた範囲の記録と測定（§8）、そして固定条件（§9）。**これらが無い状態で中間成果物の承認だけを外すと、何も守るものが無くなる。** 順序を逆にしないこと。
+**What protects instead?** Execution results and automated verification (§1), recording and measuring the scope entrusted (§8), and fixed conditions (§9). **Removing only the approval of intermediate artifacts without these leaves nothing protecting.** Do not reverse the order.
 
-#### どちらを選ぶか
+#### Which to choose
 
-**ハーネスが無い段階では、仕様駆動開発のほうが安全である。** 本手法は検出手段を育てることを前提にしており（§7）、それが無い間は誤りが素通りする。
+**When there is no harness yet, spec-driven development is safer.** This method assumes means of detection are being grown (§7), and while they are absent, errors pass straight through.
 
-本手法が効くのは、**戻せること・記録されることが揃い、検出手段を育てられる場合である。** 揃わないなら無理に適用しない。
+This method works **when reversibility and recording are in place and means of detection can be grown.** If they are not in place, do not force it.
 
-**なお、仕様駆動開発は変わり続けている。** ここに書いたのは2026年時点の一般的な形であり、個々の実装の現在の仕様ではない。**比べるときは実物を確かめること。**
+**Note also that spec-driven development keeps changing.** What is written here is the general form as of 2026, not the current specification of any individual implementation. **When comparing, check the real thing.**
 
-### レビューゲートが残る現場
+### Workplaces where review gates remain
 
-対立ではなく併存。ただし振り分けは「レビューゲートを手放せるか」という二値では行わない。**残るゲートがどこに置かれ、動かせるか** で判断する。
+Coexistence, not opposition. The sorting is not done by the binary "can the review gate be let go." It is judged by **where the remaining gates are placed and whether they can be moved**.
 
-#### ゲートの位置
+#### Where the gate is
 
-残るゲートが内側ループのどこに乗るかで意味が変わる。
+The meaning changes with where in the inner loop the remaining gate sits.
 
-| ゲートの位置 | 例 | 本手法との関係 |
+| Gate position | Examples | Relation to this method |
 |---|---|---|
-| 出口（受け入れ・発火） | UAT、リリース承認、本番反映の発火 | **成立する。** 検出手段は実行結果のままであり、人はその結果を受けて判断する。§8の「自動ゲート＋人が発火」と同型 |
-| 途中（中間成果物の承認） | 設計書レビュー、コードレビューの全件必須 | **成立しない。** 人が検出手段そのものになり、§1の置き換えが起きない（§11パターン3と同型） |
+| Exit (acceptance, trigger) | UAT, release approval, triggering the production rollout | **Holds.** The means of detection remains the execution results, and humans judge based on those results. The same shape as §8's "automated gate + human trigger" |
+| Midway (approval of intermediate artifacts) | Design document review, mandatory review of all code | **Does not hold.** The human becomes the means of detection itself, and §1's replacement does not happen (the same shape as §11 Pattern 3) |
 
-出口のゲートはAIの進み方を変えない。途中のゲートは、AIに人向けの承認用成果物を作る工程を内側ループへ常設させる。この差が振り分けの実体である。
+A gate at the exit does not change how the AI proceeds. A gate midway makes the inner loop permanently include a step in which the AI produces artifacts for human approval. This difference is what the sorting really is.
 
-#### ゲートの可動性
+#### Whether the gate can move
 
-出口にゲートが残る場合、それが実績で動かせるかで運用が変わる。
+When a gate remains at the exit, operation changes with whether it can be moved by track record.
 
-| | 動かせる | 動かせない（契約・規程） |
+| | Can be moved | Cannot be moved (contract / regulations) |
 |---|---|---|
-| **出口のみ** | ハイブリッドを出発点とし、緩和の実績を積んで完全適用へ向かう | ハイブリッドで定常運用する。人の関与が一定量残るが成立する |
-| **途中にも及ぶ** | 移行計画として扱い、まず出口へ寄せる交渉を行う | 本手法を使わない |
+| **Exit only** | Start from a hybrid, accumulate a track record of loosening, and head toward full application | Operate steadily as a hybrid. A certain amount of human involvement remains, but it holds |
+| **Extends midway too** | Treat as a migration plan, and first negotiate to move it to the exit | Do not use this method |
 
-すなわち、**すべてのレビュープロセスを手放せない場合でも、残すゲートを出口に寄せられれば適用できる。** ハイブリッドは例外的な妥協ではなく、通常の適用形態のひとつである。
+In other words, **even when not every review process can be let go, it can be applied if the remaining gates can be moved to the exit.** A hybrid is not an exceptional compromise but one of the normal forms of application.
 
-#### ハイブリッドの運用
+#### Operating a hybrid
 
-- 残すゲートは§8の委譲範囲の表に載せる。動かせないものは保留に固定し、固定である旨と出所（契約か規程か担当者の判断か）を記録する。動かせるものは観察中として実績を積む
-- **残したゲートで見つかった誤りは、検出漏れ（§6）として記録する。** UATで人が見つけた誤りは、ハーネスが取り逃がした誤りである。ハイブリッドではここが外側ループの最良の入力になる
-- クライアントへの説明は§15のまま変わらない。レビューしていない範囲が変わるだけで、それを成立させる装置（意思決定ログと作業ログの保全）は同じ
+- Put the remaining gates in the delegation table of §8. Those that cannot be moved are fixed at on hold, with the fact that they are fixed and their source (contract, regulations, or a person's judgment) recorded. Those that can be moved accumulate a track record as under observation
+- **Record errors found at a remaining gate as missed detections (§6).** An error a human found in UAT is an error the harness let slip. In a hybrid, this is the best input to the outer loop
+- The explanation to the client stays as in §15. Only the range not reviewed changes; the apparatus that makes it hold (preserving decision logs and work logs) is the same
 
-ハイブリッドは、残したゲートの分だけ人の関与あたりの成果（§4）が下がる。これは適用可否ではなく程度の問題である。
+A hybrid lowers output per unit of human involvement (§4) by as much as the gates kept. This is a question of degree, not of applicability.
 
-#### 本手法を使わない場合
+#### When not to use this method
 
-中間成果物の承認が契約・規程上必須で、出口へ寄せる交渉も成立しない場合。レビュー通過そのものが納品物の定義になっている案件がこれにあたる。無理に適用しない。
+When approval of intermediate artifacts is mandatory by contract or regulations, and negotiation to move it to the exit does not succeed either. Engagements where passing review is itself the definition of the deliverable fall here. Do not force it.
 
-## 15. クライアントとの合意事項
+## 15. What to agree with the client
 
-- 人が設計書とコードを細かくレビューしていないことを事前に共有する
-- 実装寄りの詳細はAIに問う。エンジニアに問うべきは検証プロセスとアーキテクチャ
-- レビューしていないことと責任を負わないことは別である。それを成立させる装置が、意思決定ログと作業ログの保全である
+- Share in advance that humans are not reviewing design documents and code in detail
+- Ask the AI about implementation-level details. What to ask engineers about is the verification process and the architecture
+- Not reviewing is different from not taking responsibility. The apparatus that makes this hold is the preservation of decision logs and work logs
 
-## 16. 差し替え可能な構成要素（ポート）
+## 16. Swappable components (ports)
 
-技術選択の陳腐化と導入環境の制約に対応するため、以下を差し替え単位として定義する。参照実装は各ポートに1つの実装例を持つ。
+To cope with technology choices becoming obsolete and with the constraints of the adopting environment, the following are defined as units of swapping. The reference implementation has one example implementation for each port.
 
-| ポート | 責務 | 実装例（2026年7月時点） |
+| Port | Responsibility | Example implementations (as of July 2026) |
 |---|---|---|
-| Tracker | 作業単位の取得・状態遷移・記録 | Linear / GitHub Issues / Jira |
-| Repo | コード配置、PR/MR、マージ | GitHub / GitLab |
-| Runner | 検証と配布の実行 | GitHub Actions / GitLab CI |
-| Sandbox | エージェントの実行環境 | Claude Managed Agents（自己ホスト） / Cloudflare / Daytona / Modal |
-| Preview | 変更を人とAIが触れる場所 | Vercel / Release.com / 自前 |
-| Telemetry | 停止・手戻り・検出漏れ・抜き取り確認・委譲範囲の変更の記録 | OTLP → SigNoz / Grafana / CloudWatch |
-| Flag | 露出制御とロールバック | OpenFeature準拠の任意の実装 |
+| Tracker | Getting work items, state transitions, recording | Linear / GitHub Issues / Jira |
+| Repo | Code placement, PR/MR, merge | GitHub / GitLab |
+| Runner | Running verification and deployment | GitHub Actions / GitLab CI |
+| Sandbox | The agent's execution environment | Claude Managed Agents (self-hosted) / Cloudflare / Daytona / Modal |
+| Preview | Where humans and the AI can touch a change | Vercel / Release.com / self-built |
+| Telemetry | Recording stops, rework, missed detections, spot checks, and delegation changes | OTLP → SigNoz / Grafana / CloudWatch |
+| Flag | Exposure control and rollback | Any implementation conforming to OpenFeature |
 
-実装例は現時点での選択肢であり、定義の一部ではない。この領域は更新が速いため、より適した選択肢が出た場合は差し替える。また導入環境の制約により、既存の資産に合わせて選択することもある。
+The example implementations are the current options and not part of the definition. This area updates quickly, so when a better option appears, swap it in. Choices may also be made to fit existing assets, due to the constraints of the adopting environment.
 
-### ポート語彙
+### Port vocabulary
 
-スキルはポート語彙のみを使い、実装名を書かない。実装名を知るのはアダプタだけとする。区分は副作用の種別であり、固定条件とゲートの適用点を決める。
+Skills use only the port vocabulary and do not write implementation names. Only adapters know implementation names. The category is the kind of side effect, and determines where fixed conditions and gates apply.
 
-| ポート | 操作 | 意味 | 区分 |
+| Port | Operation | Meaning | Category |
 |---|---|---|---|
-| Tracker | 作業単位を取得する | 次に着手する対象、または指定IDの内容を得る | 読取 |
-| Tracker | 作業単位を起票する | 新規の作業単位を作る | 記録 |
-| Tracker | ステータスを進める | 着手中／検証中／完了などへ遷移させる | 記録 |
-| Tracker | 作業ログを追記する | 途中経過や試行の記録を残す | 記録 |
-| Tracker | 作業単位の本文を直す | 起票した内容を書き換える。**着手前に限る**（下記） | 記録 |
-| Repo | 作業空間を用意する | ブランチを切る、作業対象を取得する | 記録 |
-| Repo | 変更を提出する | PR/MRを作る | 記録 |
-| Repo | 提出の中身と指摘を取得する | 差分とレビュー指摘を読む | 読取 |
-| Repo | 変更を統合する | マージする | **不可逆** |
-| Runner | 検証を実行する | テスト・型・Lintを走らせる | 読取 |
-| Runner | 検証結果を取得する | 成否と失敗内容を得る | 読取 |
-| Runner | 配布を実行する | 検証環境／本番へ出す | **不可逆** |
-| Runner | 配布を戻す | 直前の正常な版へ差し戻す | 記録 |
-| Sandbox | サンドボックスを用意する | 隔離された実行環境を起動する | 記録 |
-| Sandbox | コマンドを実行する | 環境内で任意のコマンドを走らせる | 記録 |
-| Sandbox | サンドボックスを破棄する | 片付ける | 記録 |
-| Preview | 変更をプレビューに出す | プレビュー環境へ反映する | 記録 |
-| Preview | プレビュー先を取得する | URLなど、人とAIが触れる場所を得る | 読取 |
-| Preview | プレビューを破棄する | 片付ける | 記録 |
-| Telemetry | 停止を記録する | 人に判断を仰いだ事実と種別を残す | 記録 |
-| Telemetry | 手戻りを記録する | やり直しが生じた事実と、その対象・原因を残す | 記録 |
-| Telemetry | 抜き取り確認を記録する | 見た範囲・見なかった範囲と、修正の有無を残す | 記録 |
-| Telemetry | 委譲範囲の変更を記録する | 委譲範囲の表を動かした事実と、その後の結果を残す | 記録 |
-| Flag | 見せる範囲のフラグを定義する | 新しいスイッチを作る | 記録 |
-| Flag | 見せる範囲を広げる | 見える人を増やす（1割→5割→全体のように段階的に） | **不可逆** |
-| Flag | 見せる範囲を戻す | 広げる前の範囲へ戻す | 記録 |
+| Tracker | Get work item | Obtain the next target to start on, or the contents of a given ID | Read |
+| Tracker | File work item | Create a new work item | Record |
+| Tracker | Advance status | Transition to started / in verification / done, etc. | Record |
+| Tracker | Append to work log | Leave a record of progress and attempts | Record |
+| Tracker | Edit work item body | Rewrite what was filed. **Only before work starts** (below) | Record |
+| Repo | Prepare workspace | Cut a branch, fetch the working target | Record |
+| Repo | Submit change | Create a PR/MR | Record |
+| Repo | Get submission contents and comments | Read the diff and review comments | Read |
+| Repo | Integrate change | Merge | **Irreversible** |
+| Runner | Run verification | Run tests, types, and lint | Read |
+| Runner | Get verification results | Obtain pass/fail and what failed | Read |
+| Runner | Run deployment | Deploy to the verification environment / production | **Irreversible** |
+| Runner | Roll back deployment | Revert to the immediately preceding healthy version | Record |
+| Sandbox | Prepare sandbox | Start an isolated execution environment | Record |
+| Sandbox | Run command | Run any command inside the environment | Record |
+| Sandbox | Discard sandbox | Clean up | Record |
+| Preview | Put change on preview | Reflect it in the preview environment | Record |
+| Preview | Get preview location | Obtain a URL or other place humans and the AI can touch | Read |
+| Preview | Discard preview | Clean up | Record |
+| Telemetry | Record stop | Leave the fact of asking a human for a decision, and its kind | Record |
+| Telemetry | Record rework | Leave the fact that redoing occurred, and its target and cause | Record |
+| Telemetry | Record spot check | Leave the range looked at, the range not looked at, and whether anything was corrected | Record |
+| Telemetry | Record delegation change | Leave the fact that the delegation table was moved, and the result afterwards | Record |
+| Flag | Define exposure flag | Create a new switch | Record |
+| Flag | Widen exposure | Increase who can see it (in stages, such as 10% → 50% → everyone) | **Irreversible** |
+| Flag | Revert exposure | Return to the range before widening | Record |
 
-補足事項は次のとおり。
+Supplementary notes follow.
 
-- 配布先は引数で受け、検証環境か本番かはアダプタが解決する。同じ語彙のまま到達先だけが変わるため、固定条件の判定は引数で行う
-- Runnerは配布の巻き戻しを別操作として持つ。前の版を引数にした「配布を実行する」でも到達できるが、それでは不可逆区分を引き継ぎゲートに掛かる。障害時に戻す手段が人の発火待ちになることを避け、Flagと同じ非対称性を保つ
-- 「配布を戻す」が成立するには、前の版の成果物が保持されている必要がある。これはハーネスの要件であり、立ち上げ期に用意する対象に含める
-- **破壊的なスキーマ変更を含む配布は、戻しても戻らない。** 前の版へ差し替えても失われたデータは復旧しないため、§7の「戻せること」が成立しない。これは§9の固定条件（本番データの破壊的操作）に該当するものとして扱う
-- 本番で配布を戻した事実は、検出漏れ（§6）として記録する。巻き戻しに至ったということは、ハーネスが取り逃がしたということである
-- Flagは見せる範囲を広げる操作のみ不可逆とし、戻す操作は固定条件に含めない。緩和と締め直しの非対称性をここでも保つ
-- コード変更を含まない記録のみのMRは、戻せる側として自動統合の対象としてよい
-- 停止（人に判断を仰ぐ）はポートではなくプロセス層の中核機能とし、アダプタで差し替えられないものとする
-- **「作業単位の本文を直す」は着手前に限る。** 着手後の本文は「何を頼まれたか」の記録であり、書き換えられる形にすると**「頼まれたとおり作ったか」を確かめられなくなる。** 作ったものに合わせて依頼を書き直せるためである。§8が承認を宣言で表さないとしているのと同じ理由による。着手後の訂正は「作業ログを追記する」で行う
-- 検出漏れ（§6）は独立した操作を設けず、「手戻りを記録する」に発見された工程を属性として持たせる
-- **手戻りの原因の内訳（§6）も同様に、「手戻りを記録する」の属性として持たせる。** 要件のズレ／設計のズレ／実装バグの区別は、どの工程の精度が低いかの特定に使うため、記録の時点で付ける必要がある。後から分類し直すと、分類した側の解釈が入る
-- **「手戻りを記録する」は、人が直した場合とAIが自ら気づいて直した場合の双方を含む。** 区別は誰が直したかではなく、やり直しが生じた事実にある。人が直したかどうかは、それ自体が委譲範囲の状態を読む材料になるため属性として持たせてよい
-- **「抜き取り確認を記録する」は、修正が入らなかった場合も必ず記録する。** §8が緩和の判定をN回連続で修正が入らないことで行うとしている以上、修正が無かった回が残らなければ判定が成立しない。見なかった範囲を残すことも同じ理由による
-- **モデル識別子（§6の必須属性）**は、スキルからの呼び出しではなくアダプタが自動で付与する。ランタイム由来の記録であり、語彙には現れない
-- **トークン消費（§6の任意の記録対象）**も同じくアダプタが付与する。ただし**必須ではないため、付与できない構成であってもよい。** モデル識別子と束ねて扱わないこと。束ねると、トークンの取得を止めたときにモデル識別子まで落ちる
+- The deployment target is received as an argument, and the adapter resolves whether it is the verification environment or production. The same vocabulary only changes the destination, so fixed conditions are judged by the argument
+- Runner has rolling back a deployment as a separate operation. It could be reached with "Run deployment" given the previous version as an argument, but that would inherit the irreversible category and be caught by the gate. This avoids the means of reverting during an incident waiting on a human trigger, and keeps the same asymmetry as Flag
+- For "Roll back deployment" to hold, the artifacts of the previous version must be kept. This is a harness requirement and is included in what is prepared in the bootstrap phase
+- **A deployment that includes a destructive schema change does not come back even when rolled back.** Swapping back to the previous version does not recover lost data, so §7's "reversible" does not hold. This is treated as falling under the fixed conditions of §9 (destructive operations on production data)
+- The fact that a deployment was rolled back in production is recorded as a missed detection (§6). Reaching a rollback means the harness let something slip
+- For Flag, only widening exposure is irreversible; reverting is not included in the fixed conditions. The asymmetry between loosening and tightening back is kept here too
+- An MR containing only records, with no code change, may be subject to automatic integration as being on the reversible side
+- Stopping (asking a human for a decision) is not a port but a core function of the process layer, and cannot be swapped by an adapter
+- **"Edit work item body" is limited to before work starts.** After work starts, the body is the record of "what was asked for," and making it rewritable **makes it impossible to confirm "whether it was built as asked."** The request could be rewritten to match what was built. This is for the same reason §8 does not express approval by declaration. Corrections after work starts are made with "Append to work log"
+- Missed detections (§6) do not get an independent operation; "Record rework" is given the stage in which it was found as an attribute
+- **The breakdown of rework causes (§6) is likewise given as an attribute of "Record rework."** The distinction between requirements drift / design drift / implementation bug is used to identify which stage has low accuracy, so it must be attached at the time of recording. Reclassifying later brings in the interpretation of whoever reclassified
+- **"Record rework" covers both the case where a human fixed it and the case where the AI noticed and fixed it itself.** The distinction lies not in who fixed it but in the fact that redoing occurred. Whether a human fixed it is itself material for reading the state of the scope of delegation, so it may be held as an attribute
+- **"Record spot check" is always recorded, even when no correction was made.** Since §8 judges loosening by N consecutive times without correction, the judgment does not hold unless the times without correction remain. Keeping the range not looked at is for the same reason
+- **The model identifier (a required attribute in §6)** is attached automatically by the adapter, not by calls from skills. It is a record that comes from the runtime and does not appear in the vocabulary
+- **Token consumption (an optional recording target in §6)** is likewise attached by the adapter. However, **since it is not required, a configuration that cannot attach it is acceptable.** Do not bundle it with the model identifier. Bundled, stopping token capture drops the model identifier too
 
-不可逆区分は「変更を統合する」「配布を実行する（本番指定時）」「露出を変更する」の3操作に限られる。固定条件とゲートはこの3点に集中させる。
+The irreversible category is limited to three operations: "Integrate change," "Run deployment (when production is specified)," and "Change exposure." Fixed conditions and gates are concentrated on these three points.
 
-**委譲範囲の表を動かす変更の承認も、この「変更を統合する」に載る**（§8）。承認のための操作を別に設けない。人が発火する点を増やすと、増やした分だけ§4の「人の関与あたりの成果」が下がる。
+**Approval of changes that move the delegation table also rides on this "Integrate change"** (§8). No separate operation for approval is set up. Each additional point at which a human triggers lowers §4's "output per unit of human involvement" by that much.
 
-### 記録規約
+### Recording conventions
 
-記録の置き場所は、実装の違いではなく**寿命**で決まる。作業単位が閉じたら不要になるものはTracker、その後も参照されるものはRepoに置く。
+Where a record is kept is determined not by differences in implementation but by **lifetime**. What becomes unnecessary once the work item closes goes in the Tracker; what continues to be referenced afterwards goes in the Repo.
 
-| 記録 | 寿命 | 置き場所 |
+| Record | Lifetime | Where |
 |---|---|---|
-| 意思決定ログ（停止点と回答） | 作業単位で閉じる | Tracker |
-| 作業ログ（試行と失敗） | 作業単位で閉じる | Tracker |
-| ADR | プロダクトを通じて残る | Repo |
-| 委譲範囲の変更履歴 | プロダクトを通じて残る | Repo |
-| テレメトリ | 集計対象 | Telemetry |
+| Decision log (stopping points and answers) | Closes with the work item | Tracker |
+| Work log (attempts and failures) | Closes with the work item | Tracker |
+| ADR | Remains throughout the product | Repo |
+| History of delegation changes | Remains throughout the product | Repo |
+| Telemetry | Subject to aggregation | Telemetry |
 
-Repoに置く記録は、索引ファイルからの逆引きを用意し、計画フェーズの冒頭で参照することをスキルの手順に含める。置くだけでは読まれない。
+For records kept in the Repo, provide reverse lookup from an index file, and include referring to it at the start of the planning phase in the skill's procedure. Placing it alone does not get it read.
 
-#### 委譲範囲の変更履歴の構成
+#### Structure of the history of delegation changes
 
-委譲範囲を設定ファイルとして明文化する場合、変更の事実と時刻はコミット履歴が保持する。ただし次の3点は残らないため、追記可能なファイルとして別に持つ。
+When the scope of delegation is made explicit as a configuration file, the commit history holds the fact and time of changes. However, the following three points do not remain, so they are kept separately as an appendable file.
 
-- 緩めた根拠（観察中の件数、修正の有無などの実績）
-- 緩めた後の結果（事後にしか判明しないため、コミット時点では書けない）
-- 締め直しと、その原因になった失敗の紐付け
+- The ground for loosening (the track record, such as the count under observation and whether there were corrections)
+- The result after loosening (only known after the fact, so it cannot be written at commit time)
+- Tightening back, and its link to the failure that caused it
 
-記載例:
+Example:
 
 ```
-## 2026-07-15 UIコンポーネントの実装を委譲済みへ
-- 根拠: 観察中12件、人の修正なし
-- 設定変更: commit a1b2c3d
-- 事後: 2026-07-28 レイアウト崩れ1件 → 観察中へ戻す (commit e4f5g6h)
+## 2026-07-15 Move UI component implementation to delegated
+- Ground: 12 under observation, no human corrections
+- Configuration change: commit a1b2c3d
+- Afterwards: 2026-07-28 one broken layout → back to under observation (commit e4f5g6h)
 ```
 
-この形式により、締め直しの記録がそのまま緩和しきい値の精度検証として蓄積される。
+With this format, the records of tightening back accumulate as-is into verification of the accuracy of loosening thresholds.
 
-## 17. プロダクトの品質
+## 17. Product quality
 
-**プロダクトの品質も、AIが主体となって担保する。**
+**The quality of the product is also ensured primarily by the AI.**
 
-AIはシステム開発の専門家として扱われる（§10）。したがって、プロダクトの特性、利用シーン、障害が起きたときの影響を踏まえ、**守るべき品質を自ら定義し、実践するところまでがAIの職責である。**
+The AI is treated as an expert in system development (§10). Therefore, taking into account the characteristics of the product, the scenes in which it is used, and the impact when failures occur, **it is the AI's responsibility to define the quality to protect on its own and to go as far as putting it into practice.**
 
-何を確かめるかを人に決めてもらう形にすると、**品質は決める人の熟練に比例する。** §1が置かれている目的そのものに反する。
+Making it the human's job to decide what to confirm means **quality is proportional to the skill of whoever decides.** This runs against the very purpose §1 was placed for.
 
-**水準は定義しない。** 何をどこまで守るべきかは、組織とプロダクトによって変わる。ここで定めるのは、**誰が担保するかの分担だけである。**
+**The level is not defined.** What to protect and how far changes with the organization and the product. What is set here is **only the division of who ensures what.**
 
-### AIが担保するもの
+### What the AI ensures
 
-**正解を、仕様・実行結果・技術的な性質から導けるもの。**
+**What can be answered correctly from the specification, execution results, and technical properties.**
 
-仕様どおりに動くか、壊される余地が無いか、使える速さか、動き続けるか、次に触る者が直せるか。いずれもAIが判断でき、自動で確かめられる。
+Whether it works as specified, whether there is no room to break it, whether it is fast enough to use, whether it keeps running, whether the next person to touch it can fix it. All of these the AI can judge and can confirm automatically.
 
-**何をどの手法で確かめるかは、プロダクトごとにAIが案を出し、人が選ぶ。** 人に品質の知識を求めないこと。求めた時点で、品質は人の熟練に戻る。
+**What to confirm and by which method is proposed by the AI per product, and chosen by the human.** Do not ask the human for knowledge of quality. The moment it is asked for, quality goes back to depending on human skill.
 
-### 人が担保するもの
+### What the human ensures
 
-**AIが判断できない品質は、人が担保する。** 2種ある。
+**Quality the AI cannot judge is ensured by the human.** There are two kinds.
 
-| 種別 | 何が判断できないか | 例 | 既にある仕掛け |
+| Kind | What cannot be judged | Examples | Mechanism already in place |
 |---|---|---|---|
-| **オラクルが無い** | 正解が人の感覚にしかない | 使い勝手、見え方、文言の自然さ | 抜き取り確認（§8） |
-| **事業の判断** | 正解ではなく、どこまで許容するかの選択 | 障害時に許容できる影響、満たすべき水準 | 停止点での判断（§10） |
+| **No oracle** | The correct answer exists only in human sense | Usability, how it looks, naturalness of wording | Spot checks (§8) |
+| **Business judgment** | Not a correct answer but a choice of how much to tolerate | Impact tolerable at failure, levels to meet | Decisions at stopping points (§10) |
 
-後者についてAIは案を出せるが、**決めるのは人である**（§10）。
+For the latter the AI can propose options, but **it is the human who decides** (§10).
 
-### 知識が足りないことは、人が担保する理由にならない
+### Lack of knowledge is not a reason for the human to ensure it
 
-判断できないように見えるもののうち、**情報を渡せば判断できるものは、AIの領域のままである。** 法規制、社内規程、過去の経緯がこれにあたり、§11が「渡すべきもの」として既に扱っている。
+Among the things that seem impossible to judge, **those that can be judged once the information is handed over remain in the AI's domain.** Regulations, internal rules, and past history are such things, and §11 already treats them as "what to hand over."
 
-**ここを混ぜると、渡せば済むものまで人の担保へ戻る。** §4の「人の関与あたりの成果」が下がるうえ、渡されなかった情報は次も渡されない。
+**Mixing this in sends even what could be handed over back to human assurance.** Not only does §4's "output per unit of human involvement" drop, but information that was not handed over will not be handed over next time either.
 
-## 18. 未確定事項
+## 18. Open items
 
-- 緩和のしきい値（Nの決め方）。委譲範囲の変更履歴の事後結果が蓄積されれば、実データから決定できる
-- 抜き取り確認の頻度。一時的に気づけない領域は高頻度でハーネス化を急ぎ、恒久的なものは低頻度で維持する、という方向までは決まっている
-- 恒久的に気づけない領域のうち、人の関心から漏れ続ける範囲の扱い。選択を人に委ねる以上、見られない箇所は必ず生じる。定点観測を置くかは実データを見て決める
-- 停止と、停止せずに前提として宣言することの振り分け基準。暫定案は「後から変わったら成果物を捨てることになるか」で判断する
-- 外側ループの改善を、内側ループの変更と**同じ単位で出してよいか**。承認の導出は§8で決まったが（「変更を統合する」の事実から導出する）、両ループの変更が1つの単位に混ざったときに、どちらが承認されたのかを区別できるかは未検証。実運用で決める
-- 外側ループがテレメトリを読むための取得系語彙（改善案の生成を自動化する段階で必要になる）
-- 前提知識を要求して止まった停止を、どう扱うか（§1「何のために置いているか」）。§6は「同じことを繰り返し聞くのは手戻り」という歯止めを持つが、これと同型の扱いを置くかは決めていない。**入力の停止に見えるが、目的からは失敗である。** 進める人の熟練を前提にしているため。ただし「前提知識を要求したか」を記録の時点で区別できるかが未検証であり、区別できないまま種別を増やすと分類の解釈が入る
+- The loosening threshold (how to decide N). Once the after-the-fact results in the history of delegation changes accumulate, it can be decided from real data
+- The frequency of spot checks. The direction is set so far: for temporarily undetectable areas, check frequently and hurry harnessing; for permanent ones, maintain at low frequency
+- How to handle, among permanently undetectable areas, the range that keeps slipping out of human attention. Since selection is left to humans, places that are not looked at inevitably arise. Whether to set up fixed-point observation will be decided after seeing real data
+- The criterion for sorting between stopping and proceeding by declaring an assumption without stopping. The provisional proposal is to judge by "if this changes later, will the artifacts have to be thrown away"
+- Whether outer-loop improvements **may be put out in the same unit** as inner-loop changes. The derivation of approval was settled in §8 (derived from the fact of "Integrate change"), but whether it can be told which was approved when changes from both loops are mixed in one unit is unverified. To be decided in actual operation
+- Retrieval vocabulary for the outer loop to read telemetry (needed at the stage of automating the generation of improvement proposals)
+- How to handle stops that stopped by requiring prior knowledge (§1 "What it is for"). §6 has the safeguard "asking the same thing again is rework," but whether to place a treatment of the same shape here is undecided. **It looks like an input stop, but from the purpose's standpoint it is a failure.** Because it assumes the skill of the person driving the work. However, whether "required prior knowledge" can be distinguished at the time of recording is unverified, and adding kinds without being able to distinguish them brings in classification by interpretation
 
-いずれも実データがないと決め打ちできないため、テレメトリが稼働してからの調整項目とする。
+None of these can be settled without real data, so they are items to adjust once telemetry is running.
 
-## ライセンス
+## License
 
-この定義は [Creative Commons 表示 4.0 国際（CC BY 4.0）](LICENSE)で提供する。
+This definition is provided under [Creative Commons Attribution 4.0 International (CC BY 4.0)](LICENSE).
 
 Copyright 2026 Hajime Hashino
 
-**出所を示せば、引用・翻訳・改変・商用利用のいずれも自由である。** この手法は読まれて使われることを目的にしているため、許諾を狭めない。
+**As long as the source is credited, quoting, translating, adapting, and commercial use are all free.** This method is meant to be read and used, so the permission is not narrowed.
 
-出所の示し方の例:
+Example of crediting the source:
 
 ```
-「AIオートドライビング開発 定義」 Hajime Hashino 著
+"AI Autodriving Development — Definition" by Hajime Hashino
 https://github.com/hajime-hashino/autodrive-dev-definition
 CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/)
 ```
 
-改変した場合は、改変した旨も併せて示すこと。
+If you adapt it, indicate that you did so as well.
 
-### なぜコードのライセンスではないか
+### Why not a code license
 
-このリポジトリは散文だけを持ち、コードを持たない。ソフトウェアのライセンスが使う語（Source / Object / Derivative Works）は、散文に当てはめると解釈が要る。CC BY 4.0 は文書と仕様のために作られており、そこが要らない。
+This repository holds only prose and no code. The terms software licenses use (Source / Object / Derivative Works) require interpretation when applied to prose. CC BY 4.0 was made for documents and specifications, and needs none of that.
 
-参照実装の [autodrive-dev-kit](https://github.com/hajime-hashino/autodrive-dev-kit) は、コードであるため [Apache-2.0](https://github.com/hajime-hashino/autodrive-dev-kit/blob/main/LICENSE) を用いる。**引用の向きは定義から参照実装であり、出所を示せば両立する。**
+The reference implementation, [autodrive-dev-kit](https://github.com/hajime-hashino/autodrive-dev-kit), is code and therefore uses [Apache-2.0](https://github.com/hajime-hashino/autodrive-dev-kit/blob/main/LICENSE). **The direction of reference is from the definition to the reference implementation, and with the source credited, the two are compatible.**
