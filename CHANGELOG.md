@@ -8,6 +8,30 @@ The full text from v0.7 onward can be obtained from the git tags (`definition-v0
 
 ---
 
+## v0.20 — 2026-09-30
+
+**Fixed inconsistencies that were already in the text.** They were found while translating into English (v0.19) and were translated as they were, so as not to mix translation with changes in meaning.
+
+### §16: the irreversible operations
+
+The closing paragraph of §16 listed the irreversible category as "Integrate change," "Run deployment (when production is specified)," and **"Change exposure."** **There is no operation named "Change exposure" in the vocabulary table.** In the table, the irreversible Flag operation is **"Widen exposure,"** and "Revert exposure" is Record. The supplementary notes also say "for Flag, only widening exposure is irreversible."
+
+It now says **"Widen exposure."** The meaning intended by the table and the notes did not change; only the list was aligned with them.
+
+### docs/quality.md: stale versions
+
+"Currently both v0.17" and "the body is at v0.16" were stale. Updated, and the row now says that `tag.yml` checks that the body and CHANGELOG match when it cuts the tag.
+
+### The tag for v0.19 was not cut
+
+`tag.yml` read the version from the README heading "**バージョン**," which v0.19 translated into "**Version**." The run failed, and **v0.19 has no tag.** `tag.yml` now reads "**Version**."
+
+**The failure reached nobody.** It was visible only in the CI run history. This is recorded in docs/quality.md.
+
+### A note on v0.19's entry
+
+The v0.19 entry says "the reference implementation's commands still use the Japanese operation names." **That is no longer the case** (autodrive-dev-kit 0.12.26). The commands now use the English operation names joined with hyphens (`record-stop` for "Record stop"), and still accept the Japanese names. The v0.19 entry is a record and is not rewritten.
+
 ## v0.19 — 2026-09-29
 
 **The definition is now written in English.** The meaning has not changed.

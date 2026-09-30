@@ -1,7 +1,7 @@
 # AI Autodriving Development — Definition
 
-> **Version**: v0.19
-> **Last updated**: 2026-09-29
+> **Version**: v0.20
+> **Last updated**: 2026-09-30
 > For earlier versions, see the git tags (`definition-v0.4` and so on). The differences between versions are in [CHANGELOG.md](./CHANGELOG.md).
 
 ## 1. One-sentence definition
@@ -539,7 +539,7 @@ Supplementary notes follow.
 - **The model identifier (a required attribute in §6)** is attached automatically by the adapter, not by calls from skills. It is a record that comes from the runtime and does not appear in the vocabulary
 - **Token consumption (an optional recording target in §6)** is likewise attached by the adapter. However, **since it is not required, a configuration that cannot attach it is acceptable.** Do not bundle it with the model identifier. Bundled, stopping token capture drops the model identifier too
 
-The irreversible category is limited to three operations: "Integrate change," "Run deployment (when production is specified)," and "Change exposure." Fixed conditions and gates are concentrated on these three points.
+The irreversible category is limited to three operations: "Integrate change," "Run deployment (when production is specified)," and "Widen exposure." Fixed conditions and gates are concentrated on these three points.
 
 **Approval of changes that move the delegation table also rides on this "Integrate change"** (§8). No separate operation for approval is set up. Each additional point at which a human triggers lowers §4's "output per unit of human involvement" by that much.
 
