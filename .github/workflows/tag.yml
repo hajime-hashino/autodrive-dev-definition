@@ -1,20 +1,20 @@
 name: tag
 
-# 版に名前を付ける。
+# Give each version a name.
 #
-# **統合されたあとに打つ。** 提出の途中で打つと、統合されなかった版にタグが残る。
+# **Cut after integration.** Cutting partway through a submission leaves a tag on a version that was never integrated.
 #
-# **手で打つ形をやめる。** v0.12 までは手で打たれていて、v0.13 から v0.18 までの
-# 6版が抜けた（AUT-229）。**打ち忘れに気づく機会が無い。** README は「過去の版は
-# git のタグを参照」と案内しており、直近6版について指す先が存在しなかった。
+# **Stop cutting by hand.** Up to v0.12 tags were cut by hand, and the 6 versions from v0.13 to v0.18
+# were missed (AUT-229). **There was no occasion to notice forgetting.** README says "for earlier
+# versions, see the git tags," and for the 6 most recent versions there was nothing to point at.
 #
-# 参照実装の `tag.yml` と同じ形だが、**版の在り処が違う。** あちらは `VERSION`
-# ファイルを読む。こちらは README の見出しにある。
+# The same shape as the reference implementation's `tag.yml`, but **the version lives elsewhere.** That one reads
+# the `VERSION` file. This one is in the README heading.
 on:
   push:
     branches: [main]
 
-# **この実行にだけ、書き込みを許す。** 別に資格情報を置かない。
+# **Allow writing only for this run.** No separate credentials are placed.
 permissions:
   contents: write
 
@@ -24,49 +24,52 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          # **既にあるタグが要る。** 無いと、毎回「無い」と判断して打ちに行く。
+          # **Existing tags are needed.** Without them, it would decide "not there" every time and try to cut.
           fetch-depth: 0
 
-      - name: 版にタグを打つ
+      - name: Tag the version
         run: |
           set -eu
 
-          # **README の見出しから読む。** 版の在り処はここだけである。
-          version="$(grep -m1 '\*\*バージョン\*\*' README.md | grep -oE 'v[0-9]+\.[0-9]+')"
+          # **Read it from the README heading.** This is the only place the version lives.
+          #
+          # **The heading is in English since v0.19.** It used to read "**バージョン**", and when the
+          # definition was translated (AUT-261) this step failed and v0.19 got no tag (AUT-266).
+          version="$(grep -m1 '\*\*Version\*\*' README.md | grep -oE 'v[0-9]+\.[0-9]+')"
 
-          # **読めなければ落とす。** 空のまま進むと `definition-` という名前の
-          # タグが打たれ、**打てたことが成功に見える。**
+          # **Fail if it cannot be read.** Proceeding with an empty value would cut a tag named
+          # `definition-`, and **having cut it would look like success.**
           if [ -z "${version}" ]; then
-            echo "README.md から版を読めない。見出しの形が変わった可能性がある。" >&2
+            echo "Cannot read the version from README.md. The heading's shape may have changed." >&2
             exit 1
           fi
 
-          # **CHANGELOG の先頭と揃っていることを確かめる。** 片方だけ上げた状態で
-          # タグを打つと、**タグの指す全文と、その版の差分が食い違う。**
+          # **Check that it matches the top of CHANGELOG.** Cutting a tag with only one side raised
+          # makes **the full text the tag points at and that version's differences disagree.**
           changelog="$(grep -m1 -oE '^## v[0-9]+\.[0-9]+' CHANGELOG.md | sed 's/^## //')"
           if [ "${version}" != "${changelog}" ]; then
-            echo "本文は ${version} だが CHANGELOG の先頭は ${changelog} である。揃えること。" >&2
+            echo "The body is ${version} but the top of CHANGELOG is ${changelog}. Make them match." >&2
             exit 1
           fi
 
           tag="definition-${version}"
 
-          # **同じ名前があれば何もしない。** 定義を変えない提出では版が動かないため、
-          # これは異常ではなく普通に起きる。
+          # **If the same name exists, do nothing.** Submissions that do not change the definition do not
+          # move the version, so this is not abnormal but normal.
           if git rev-parse -q --verify "refs/tags/${tag}" >/dev/null; then
-            echo "${tag} は既にある。何もしない。"
+            echo "${tag} already exists. Nothing to do."
             exit 0
           fi
 
-          # **注釈付きタグには tagger の身元が要る。** `actions/checkout` は git の
-          # 身元を設定しないため、無いまま `git tag -a` を打つと落ちる。
+          # **An annotated tag needs a tagger identity.** `actions/checkout` does not set a git
+          # identity, so running `git tag -a` without one fails.
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          # **注釈付きで打つ。** 軽量タグは、指す先のコミットの身元がそのまま
-          # 押し出される。**作者のメールアドレスを公開しない設定のもとでは、
-          # 古いコミットを指す軽量タグが拒否される**（AUT-229 で実際に5件が
-          # GH007 で落ちた）。注釈付きなら、押し出されるのはタグ自身の身元である。
-          git tag -a "${tag}" -m "定義 ${version}"
+          # **Cut it annotated.** A lightweight tag pushes the identity of the commit it points at
+          # as is. **Under a setting that keeps author emails private, lightweight tags pointing at
+          # old commits are rejected** (in AUT-229, 5 actually failed with GH007). With an annotated
+          # tag, what is pushed is the tag's own identity.
+          git tag -a "${tag}" -m "Definition ${version}"
           git push origin "${tag}"
-          echo "打った: ${tag}"
+          echo "Cut: ${tag}"

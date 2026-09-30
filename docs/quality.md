@@ -26,7 +26,7 @@ contradicts itself, those following it act on the contradiction. **It is noticed
 |---|---|---|---|
 | Consistency | Static | **A human reads it** | Contradictions between sections. **There is no mechanical detection** |
 | Consistency | Static | **None** | **Whether each `§n` reference points to a section that exists.** All currently exist, but it is a human who confirms this |
-| Consistency | Static | **None** | **Whether the version in the body matches the top of CHANGELOG.** Currently both v0.17 |
+| Consistency | After integration | `tag.yml` | **Whether the version in the body matches the top of CHANGELOG.** Checked when the tag is cut, **after integration**; a mismatch fails and no tag is cut. Currently both v0.20 |
 | Structure of records | Static | `invariants --scope self` (CI) | **Only the required attributes and structure of records.** The content of the definition is not looked at |
 | Drift between definition and implementation | — | **None** | The reference implementation's tests cite `定義§n` in 23 places, but **nobody looks at whether what they cite matches the definition** |
 
@@ -73,9 +73,13 @@ contradicts itself, those following it act on the contradiction. **It is noticed
 
 ## Things noticed (while writing this record)
 
-**The tags stop at `definition-v0.9`.** The body is at v0.16.
+**The tags stopped at `definition-v0.9`** while the body was at v0.16. README says "for earlier versions, see
+the git tags," so what the guidance pointed to did not exist. **AUT-229 fixed this**: `tag.yml` now cuts the tag
+after every integration, and the missing tags up to v0.18 were cut.
 
-README says "For earlier versions, see the git tags (`definition-v0.4` and so on)," but
-**there are no tags from v0.10 onward.** What the guidance points to does not exist.
+**Then v0.19 got no tag.** `tag.yml` read the version from the README heading "**バージョン**", and translating the
+definition into English (AUT-261) changed it to "**Version**." The run failed on 2026-09-29, and **the failure
+reached nobody**; it was found in AUT-266 and fixed there.
 
-**Not fixed in this record.** Handled in AUT-229. If not written down, the next reader will look into the same thing again.
+**What this shows:** a failure of `tag.yml` is visible only in the CI run history. **Nothing watches it.** Whether
+every version has a tag is not checked by anything; it was found by a person reading.
