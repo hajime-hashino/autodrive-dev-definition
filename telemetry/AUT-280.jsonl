@@ -1,0 +1,1 @@
+{"ts":"2026-10-14T14:27:05.865Z","work_item_id":"AUT-280","model":"claude-opus-5-5","kit_version":"0.12.34","emitter":"adapter","type":"stop","stop_kind":"定義変更の承認","stop_type":"input","detail":"definition に autodrive.json を置く変更（PR #26）。定義の本文は変えていないが、definition への変更は人の承認を要する。統合をもって承認とする","resolved":false}
